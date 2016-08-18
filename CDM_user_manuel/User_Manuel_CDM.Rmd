@@ -160,7 +160,7 @@ host = 'p595dodmp01'
 port = 1521
 sid = 'DBUPA269'
 username_cargois <- 'CARGO'
-password_cargois <- 'dbu1_cargo'
+password_cargois <- '********'
 
 
 #' RODBC MS SQL server connection string 
@@ -176,7 +176,7 @@ trusted_connection_bio <- TRUE # if TRUE connect with windows login and pw
 #' RMySQL MySQL connection string 
 #' for FlightRadar 24
 user_fr24 <- "user_ext"
-password_fr24 <- "fr0-dmds-p01"
+password_fr24 <- "************"
 dbname_fr24 <- 'FR24'
 host_fr24 <- "fr0-dmds-p01"
 ```
@@ -296,7 +296,7 @@ When the data loading procedure is complete, you can go to the following tabs to
   \caption{Yield Analysis tab, top 20 airports of CN-US}
 \end{figure}
 
-The first part of tab contains visualization of the **top *n* airports and air routes**. Figure 5 shows in the map the top 20 origin and destination airports. The surface of the circle represents the weight of shipment going through this airport. The darkness of the color represents the yield of the airport. The charts are interactive, you can zoom in/out with the mouse scroll wheel. You can also click on the legend to display/hide the origin/destination airports.
+The first part of tab contains visualization of the **top *n* airports and air routes**. Figure 6 shows in the map the top 20 origin and destination airports. The surface of the circle represents the weight of shipment going through this airport. The darkness of the color represents the yield of the airport. The charts are interactive, you can zoom in/out with the mouse scroll wheel. You can also click on the legend to display/hide the origin/destination airports.
 
 The value of *n* could be modified by dragging the slider bar. You could also modify the size of the circle if sometimes the defaut size is too big/small.
 
@@ -457,6 +457,8 @@ They are:
 * 500 to 1000 kg
 * larger than 1000 kg
 
+The proportion of the AWB of different categories in a market could be an indicator of the economic situation. For example, an increasing number of heavy shipments often means the cargo consolidation becomes more efficient, and the economic situation is going better.
+
 \begin{figure}[!h]
   \centering
   \includegraphics[width=470px]{img/cargois_AWB.png}
@@ -465,14 +467,55 @@ They are:
 
 #### Instruction
 
-#### Explaination
+The first row of this tab contains seven figures:
 
+- *Shipment frequency evolution* is a line chart which shows how the numbers of shipments change during the selected period. By defaut, there will be six curves representing repectively the different weight break.
+- *Shipment weight distribution* is a bar chart which shows the distribution of the AWB of different weight break in the selected period.
+- *Weight vs. distance* is a stacked bar chart showing the sum of shipment weight by different intervals of distance. The colors represent the different weight breaks.
+- *Frequency vs. distance*: like the previous figure, it shows the numbers of shipments by different intervals of distance.
+- *Revenu vs. distance* shows the revenus (charges) of airfreight by different intervals of distance.
+- *Yield vs. distance* is a line chart showing the gross/net yield of by weight breaks and by diatance.
+- *Average weight vs. distance* takes into accout all the weight breaks and compute the weighted arithmetic mean of weight by distance.
+
+For the charts 3, 4 ,5 and 6, if there is only one interval of distance, a pie chart will be created instead of a bar chart. All the charts can be downloaded by clicking "download PNG" button.
+
+On the left of the charts, some parameters can be changed to modify the charts. You can display/hide one or multiple weight break(s) by checking/unchecking the boxes. The second part "gross yield/net yield" corresponds to the yield type in the chart *Yield vs. distance*. The last two text input aera control the width and height of the downloaded image. 
+
+On the bottom of the page, the data table used for creating the charts is displayed. It could also be downloaded by clicking the download button.
+
+#### Explaination
+<!-- TRY TO USE data.table -->
+Before creating the charts, data manipulation should be done in order to have the right data to plot. 
+
+TO create these charts, the package `ggplot2` is extensively used. 
 
 ### Yield Calculator
 
-The last subtab of Cargo IS 
+The last subtab of Cargo IS is a marketing tool called yield calculator, which offers an automatic computing for air route cargo yield. It will read air routes from a `csv` file, query *Cargo IS* database and display a data table with weight and yield information, as weel as a air route map visualizing all the air routes by their cargo weight and cargo yield.
 
 #### Instruction
+
+The idea of yield calculator is to get rid of manual cargo yield computing. To use yield calculator, you will need to create a `csv` file containing two columns: "From" and "To", which correspond to the origin and destination airport. Once the `csv` is ready, you could upload it to **CDM** by clicking **choose file** button. Then, the year parameter should be selected. The others parameters could be modified if according to the format of your `csv` file. When everything is done, click on *Start*.
+
+A data table will be displayed after the computing. The gross yield, net yield, weight, gross charges and net charges will be calculated for each air route. On the bottom, an air routes map will show the input air routes by the cargo weight and cargo yield. The darker the curve, the higher the yield. The thicker the curve, the higher the cargo weight. Click on "Download" to download the data table. It will be a `csv` file as well. 
+
+On the left, you can choose the map projection, the comparing criteria and some graphical parameters to customize the map.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=470px]{img/cargois_yld_cal.png}
+  \caption{Yield calculator interface}
+\end{figure}
+
+#### Explaination
+
+Figure 13 show the process to 
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=470px]{img/flowchart_cargois_yld_calculator.png}
+  \caption{Flowchart of yield calculator}
+\end{figure}
+
 
 ## Seabury Database
 
@@ -525,7 +568,7 @@ If **CDM** could not be executed due to errors of Oracle instant client, you can
 
 If the problem still exists, check the [**ROracle** package installation instruction on http://cran.us.r-project.org/web/packages/ROracle/INSTALL](http://cran.us.r-project.org/web/packages/ROracle/INSTALL)
 
-## Download and nstall an R package manuelly
+## Download and install an R package manually
 
 Some of the R package could not be installed directly from **CRAN**, for example the package `ROracle`. In this situation, the manuel installation will be needed.
 
@@ -533,7 +576,7 @@ Here I will show the installation process for `ROracle`.
 
 * Firstly, download [`ROracle_1.2-1.zip` from *oracle.com* (http://www.oracle.com/technetwork/database/database-technologies/r/roracle/downloads/index.html)](http://www.oracle.com/technetwork/database/database-technologies/r/roracle/downloads/index.html)
 
-* Secondly, place the .zip file into `~/CDM/Rpackages`
+* Secondly, place the .zip file into `~/CDM/Rpackages` and make sure that *Oracle Instant Client* is correctly installed.
 
 * Then, instead of running 
 ```{r eval=FALSE, echo=TRUE}

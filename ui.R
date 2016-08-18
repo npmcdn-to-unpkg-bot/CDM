@@ -52,8 +52,8 @@ cargo.is.input <- box(width = 4,
                       
                       checkboxInput('yld_evo', 'Plot evolution since 2010 (this could take several minutes)',
                                     FALSE),
-                      checkboxInput('min_max_avg', 'Show min/max/average',
-                                    FALSE),
+                      # checkboxInput('min_max_avg', 'Show min/max/average',
+                      #               FALSE),
                       actionButton('go2','Load data',
                                    style="color: #fff; background-color: #337ab7; border-color: #2e6da4") ,
                       downloadButton('dl_cargo_is', 'Download raw data')
@@ -424,7 +424,7 @@ fluidrow_Seabury = fluidRow(
 
 ## fluidrow_FR24_load: FlightRadar24 load #########
 # querry FR24 DB:
-# object: analyse for an airline, its fleets AC type, network, frequency of air routes,
+# object: analyse for an airline, its fleets AC type, network, frequency of air routes,Aircraft: 
 #         
 fluidrow_FR24_load <- fluidPage(
   fluidRow(
@@ -468,7 +468,7 @@ fluidrow_FR24_load <- fluidPage(
     ),
     
     box( width = 8, 
-         title = 'Frequency',
+         title = 'Data quality check',
          # uiOutput('fr24ui_freq_sel_col'),
          selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
          
@@ -513,7 +513,10 @@ fluidrow_FR24_airline <- fluidPage(
         leafletOutput('fr24_airline_network_map', height = 650)
         ),
         tabPanel(title = 'Network visualization',
-                 visNetworkOutput('fr24_network_viz', height = 650, width = '100%'))
+                 visNetworkOutput('fr24_network_viz', height = 650, width = '100%')),
+        tabPanel(title = 'Analysis',
+                 verbatimTextOutput('network_fr24_analysis1'),
+                 verbatimTextOutput('network_fr24_analysis2'))
             
     )
   )

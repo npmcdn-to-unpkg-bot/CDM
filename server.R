@@ -199,6 +199,7 @@ function(input, output, session) {
 
   # Cargo IS query ####
   DATA2 <- eventReactive(input$go2, {
+    # 
     if(input$yld_evo){
       dat <- CargoIS.SQL.query(CargoDB, 
                                level = input$level,
@@ -215,21 +216,7 @@ function(input, output, session) {
   })
   
   DATA <- eventReactive(input$go2, {
-    # if(!input$yld_evo){
-    # 
-    #   dat <- CargoIS.SQL.query(CargoDB,
-    #                            level = input$level,
-    #                            ORG = input$org,
-    #                            DST = input$dst,
-    #                            year = input$year)
-    # } else{
-    #   if(is.na(input$year)){
-    #     dat <- DATA2()
-    #   } else {
-    #     dat.sauv <- DATA2()
-    #     dat <- dat.sauv[dat.sauv$SALES_YEAR == input$year,]
-    #   }
-    # }
+
     dat.sauv <- DATA2()
     dat <- dat.sauv[dat.sauv$SALES_YEAR == input$year,]
     dat
@@ -415,30 +402,45 @@ function(input, output, session) {
 ######### Evo Yield(with gvis) ######### 
   # gvis output evo plot
   output$yld_evo_cargois_gvis <- renderGvis({
+    # if(input$yld_evo){
+    #   data2 = DATA2()
+    #   # year.range <- sort(choice.year, decreasing = FALSE)
+    # } else {
+    #   data2 <- DATA()
+    #   # year.range <- input$year
+    # }
+    # data2[is.na(data2)]=0
+    
+    # total_evolution = data.frame(Month = NULL, x= NULL)
+    # 
+    # for (i in year.range){
+    #   evo = gross_yield_evolution(data2,i)
+    #   evo2 <- net_yield_evolution(data2,i)
+    #   weight <- aggregate(x =list(weight = data2[data2$SALES_YEAR==i,]$WEIGHT_CURRENT_YEAR), 
+    #                       by = list(Months = data2[data2$SALES_YEAR==i,]$SALES_MONTH), 
+    #                       FUN = sum)
+    #   
+    #   Months = as.Date(as.yearmon(paste(i, evo$Months, sep = '-')))
+    #   
+    #   df <- data.frame('Months' = Months, 'Gross yield' = evo$evo_gross_yield, 
+    #                    'Net yield' = evo2$evo_net_yield, 'Weight'=weight$weight)
+    #   total_evolution = rbind(total_evolution, df)
+    # }
+    
     if(input$yld_evo){
-      data2 = DATA2()
-      year.range <- sort(choice.year, decreasing = FALSE)
+      data2 = data.table(DATA2())
     } else {
-      data2 <- DATA()
-      year.range <- input$year
+      data2 <- data.table(DATA())
     }
-    data2[is.na(data2)]=0
     
-    total_evolution = data.frame(Month = NULL, x= NULL)
+    total_evolution <- data2[,.(Weight = sum(WEIGHT_CURRENT_YEAR), 
+                                Charges = sum(WEIGHT_CHARGES_CURR_YEAR_USD),
+                                Surcharges = sum(OTHER_CHARGES_CURR_YEAR_USD),
+                                'Gross.yield' =  (sum(WEIGHT_CHARGES_CURR_YEAR_USD)+sum(OTHER_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR),
+                                'Net.yield' = (sum(WEIGHT_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR)), 
+                             by = .(Months = paste(SALES_YEAR, SALES_MONTH, sep = '-'))
+                             ]
     
-    for (i in year.range){
-      evo = gross_yield_evolution(data2,i)
-      evo2 <- net_yield_evolution(data2,i)
-      weight <- aggregate(x =list(weight = data2[data2$SALES_YEAR==i,]$WEIGHT_CURRENT_YEAR), 
-                          by = list(Months = data2[data2$SALES_YEAR==i,]$SALES_MONTH), 
-                          FUN = sum)
-      
-      Months = as.Date(as.yearmon(paste(i, evo$Months, sep = '-')))
-      
-      df <- data.frame('Months' = Months, 'Gross yield' = evo$evo_gross_yield, 
-                       'Net yield' = evo2$evo_net_yield, 'Weight'=weight$weight)
-      total_evolution = rbind(total_evolution, df)
-    }
     avg <- sum(data2$WEIGHT_CHARGES_CURR_YEAR_USD+data2$OTHER_CHARGES_CURR_YEAR_USD)/sum(data2$WEIGHT_CURRENT_YEAR)
     avg_ny <- sum(data2$WEIGHT_CHARGES_CURR_YEAR_USD)/sum(data2$WEIGHT_CURRENT_YEAR)
     
@@ -490,10 +492,13 @@ function(input, output, session) {
   output$datatable = DT::renderDataTable({
     if (is.null(INFILE()))
       return(NULL)
-    data <- output_yield(CARGO(), ROUTE1())
-    data[is.na(data)] <- 0
-    out.data <- data.frame(data) #routes = row.names(data), 
+    # data <- output_yield(CARGO(), ROUTE1())
+    # data[is.na(data)] <- 0
+    # out.data <- data.frame(data) #routes = row.names(data), 
     
+    data <- grs_net_yield2(CARGO(), ROUTE1())
+    data[is.na(data)] <- 0
+    out.data <- data
     ##  downloadable datatable
     output$downloadData <- downloadHandler(
       #- This function returns a string which tells the client
@@ -515,13 +520,17 @@ function(input, output, session) {
       if (is.null(INFILE()))
         return(NULL)
       data[is.na(data)] <- 0
-      groutes <- data.frame(apt = row.names(data), cnt = data[,'total_weight'],
+      groutes <- data.frame(#apt = row.names(data), 
+                            ORG = data$ORG,
+                            DST = data$DST,
+                            cnt = data[,'total_weight'],
                             # lsize = 5*(data[,input$compare]/max(data[,input$compare]))^1.5
                             lsize = (data[,input$compare]/max(data[,input$compare])) ## should be line colour
       )
       Plot.air.route.html(groutes, pt.color = input$pt.color, ln.color = input$color , projection = input$projection,  point_size = input$pt.size)
     })
-    DT::datatable(out.data,options = list(pageLength = 10))
+    
+    DT::datatable(out.data, options = list(pageLength = 10))
   })
   
   ######### freq_shipment_evo ########
@@ -637,26 +646,50 @@ function(input, output, session) {
       
       ######## VERSUS DATA TABLE ########
       versus_datatable_cargois <- reactive({
-        df <- DATA()
-        df <- df[df$WEIGHT_CURRENT_YEAR != 0,]
-        df <- df[df$GREATCIRCLEDISTANCE_NM != 0,]
-        cutt <- cut(df$GREATCIRCLEDISTANCE_NM, c(seq(1,10000,by = 500)-1, Inf), 
-                    dig.lab=10) # prevent scientific notation
-        df$lebal <- cutt
+        # df <- DATA()
+        # df <- df[df$WEIGHT_CURRENT_YEAR != 0,]
+        # df <- df[df$GREATCIRCLEDISTANCE_NM != 0,]
+        # cutt <- cut(df$GREATCIRCLEDISTANCE_NM, c(seq(1,10000,by = 500)-1, Inf), 
+        #             dig.lab=10) # prevent scientific notation
+        # df$lebal <- cutt
+        # 
+        # # test <- aggregate(x=list(weight=df$WEIGHT_CURRENT_YEAR), by = list(dist = df$lebal, wb = df$WEIGHT_BREAK), FUN = sum)
+        # # p_weight_distance <- qplot(dist, data = test, weight = weight, geom = 'bar',
+        # #                            xlab = 'Distance (nm)',ylab = 'Weight (kg)', fill = wb,
+        # #                            main = 'Weight vs Distance')
+        # test <- aggregate(x=list(weight=df$WEIGHT_CURRENT_YEAR, freq = df$AWB_COUNT_CURRENT_YEAR, 
+        #                          wchg = df$WEIGHT_CHARGES_CURR_YEAR_USD, surchg = df$OTHER_CHARGES_CURR_YEAR_USD),
+        #                   by = list(dist = df$lebal, wb = df$WEIGHT_BREAK), FUN = sum)
+        # 
+        # 
+        # test$gy <- (test$wchg+test$surchg)/test$weight
+        # test$ny <- test$wchg/test$weight
+        # 
+        # test
         
-        # test <- aggregate(x=list(weight=df$WEIGHT_CURRENT_YEAR), by = list(dist = df$lebal, wb = df$WEIGHT_BREAK), FUN = sum)
-        # p_weight_distance <- qplot(dist, data = test, weight = weight, geom = 'bar',
-        #                            xlab = 'Distance (nm)',ylab = 'Weight (kg)', fill = wb,
-        #                            main = 'Weight vs Distance')
-        test <- aggregate(x=list(weight=df$WEIGHT_CURRENT_YEAR, freq = df$AWB_COUNT_CURRENT_YEAR, 
-                                 wchg = df$WEIGHT_CHARGES_CURR_YEAR_USD, surchg = df$OTHER_CHARGES_CURR_YEAR_USD),
-                          by = list(dist = df$lebal, wb = df$WEIGHT_BREAK), FUN = sum)
+        dt <- data.table(DATA())
+        dt <- dt[WEIGHT_CURRENT_YEAR != 0]
+        dt <- dt[GREATCIRCLEDISTANCE_NM != 0]
+        dt$labal <- dt[, cut(GREATCIRCLEDISTANCE_NM, c(seq(1,10000,by = 500)-1, Inf), dig.lab=10)]
         
+        output <- dt[,.(weight = sum(WEIGHT_CURRENT_YEAR), 
+                        freq = sum(AWB_COUNT_CURRENT_YEAR),
+                        wchg = sum(WEIGHT_CHARGES_CURR_YEAR_USD),
+                        surchg = sum(OTHER_CHARGES_CURR_YEAR_USD),
+                        gy = (sum(WEIGHT_CHARGES_CURR_YEAR_USD)+sum(OTHER_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR),
+                        ny = (sum(WEIGHT_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR)
+                    ),
+                    by = .(dist = labal, wb = WEIGHT_BREAK)
+                  ]
         
-        test$gy <- (test$wchg+test$surchg)/test$weight
-        test$ny <- test$wchg/test$weight
+        output$wb <- factor(output$wb, levels = c('[0-45[',
+                                                  '[45-100[',
+                                                  '[100-300[',
+                                                  '[300-500[',
+                                                  '[500-1000[',
+                                                  '[1000+'))
         
-        test
+        output[order(-wb, dist)]
       })
       
       versus_data_cargois <- reactive({
@@ -670,7 +703,8 @@ function(input, output, session) {
         #' render pie chart instead of bar chart
         if(length(unique(versus_data_cargois()$dist)) == 1){
           
-          p_weight_distance <- ggplot(data = versus_data_cargois(), aes(x = dist, y = weight, fill = wb))+
+          p_weight_distance <- ggplot(data = versus_data_cargois(),
+                                      aes(x = dist, y = weight, fill = wb))+
             geom_bar(width = 1, stat = 'identity') +
             coord_polar("y", start=0)+
             # geom_text(aes(label=weight), color="white", size=3.5)+
@@ -1310,7 +1344,7 @@ WHERE COMPLETION_STATUS=0\n"
       
     }
     
-    selectInput('fr24_select_reg_number2','Abnormal registration number, select if you want to remove them',
+    selectInput('fr24_select_reg_number2','Select the registration number which you want to remove',
                 choices = abnormal_reg, #selected = abnormal_reg,
                 multiple = TRUE)
     
@@ -1329,7 +1363,7 @@ WHERE COMPLETION_STATUS=0\n"
     
     airline <- c(sort(unique(FR24_datatable()$AIRLINE)))
 
-    selectInput('fr24_select_flight_number2','Choose the correct flight number',
+    selectInput('fr24_select_flight_number2','Select airlines: ',
                        choices = airline,
                        selected = airline, multiple = TRUE)
   })
@@ -1552,30 +1586,76 @@ WHERE COMPLETION_STATUS=0\n"
   })
   
   # visNetwork ####
-  output$fr24_network_viz <- renderVisNetwork({
-    data <- data.table(FR24_BIO_AC())
-    
-    apt_loc <- data.table(AIRPORT_LOCATION())
-    apt_region <- apt_loc[,c('IATA','name','region_name'), with = FALSE]
-    
-    airport <- data.table(label = c(data$ORG, data$DST))
-    
+  
+  ## ___creat node__####
+  FR24_NW_NODE <- reactive({
+    airport <- data.table(label = c(FR24_BIO_AC()$ORG, FR24_BIO_AC()$DST))
     freq <- airport[, .N ,by = label]
     freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
     
     nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
                         
-                        title = paste0("<p><b>Airport: ", freq$name ,"</b><br>Frequency: ", freq$N,"</p>"))
+                        title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
+    nodes
+  })
+  ## ___creat edges__####
+  FR24_NW_EDGE <- reactive({
+    match <- data.table(FR24_NW_NODE()$id, FR24_NW_NODE()$label)
     
-    match <- data.table(nodes$id, nodes$label)
+    routes <- data.table(ORG = FR24_BIO_AC()$ORG, DST = FR24_BIO_AC()$DST)
     
-    routes <- data.table(ORG = data$ORG, DST = data$DST)
     freq_routes <- routes[, .N ,by = list(ORG, DST)]
     
     freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
     freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
     
     edges <- data.frame(from = freq_routes$V1.x, to = freq_routes$V1.y )
+    edges
+  })
+  
+  
+  ## ___analysis output__####
+  output$network_fr24_analysis1 <- renderPrint({
+    routes <- as.matrix(data.table(ORG = FR24_BIO_AC()$ORG, DST = FR24_BIO_AC()$DST))
+    
+    mtx <- get.adjacency(graph_from_edgelist(as.matrix(routes), directed = TRUE))
+    
+    net <- graph.adjacency(mtx,mode="directed",weighted=TRUE,diag=FALSE)
+    
+    betweenness(net)
+    
+    output$network_fr24_analysis2 <- renderPrint({
+      distances(net)
+    })
+    
+  })
+  
+  output$fr24_network_viz <- renderVisNetwork({
+    nodes <- FR24_NW_NODE()
+    edges <- FR24_NW_EDGE()
+    # data <- data.table(FR24_BIO_AC())
+    # 
+    # apt_loc <- data.table(AIRPORT_LOCATION())
+    # apt_region <- apt_loc[,c('IATA','name','region_name'), with = FALSE]
+    # 
+    # airport <- data.table(label = c(data$ORG, data$DST))
+    # 
+    # freq <- airport[, .N ,by = label]
+    # freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
+    # 
+    # nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
+    #                     
+    #                     title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
+    # 
+    # match <- data.table(nodes$id, nodes$label)
+    # 
+    # routes <- data.table(ORG = data$ORG, DST = data$DST)
+    # freq_routes <- routes[, .N ,by = list(ORG, DST)]
+    # 
+    # freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
+    # freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
+    # 
+    # edges <- data.frame(from = freq_routes$V1.x, to = freq_routes$V1.y )
     
     # df <- unique(data.frame(ORG = data$ORG, DST = data$DST, stringsAsFactors = FALSE))
     if(nrow(nodes)>50){

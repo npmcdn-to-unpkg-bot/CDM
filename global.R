@@ -16,7 +16,7 @@
 
 ####################################################
 #' CONNECTION PARAMETERS
-#' 
+#'
 #' Modify it before the first run of the application
 ####################################################
 #' ROracle connection string
@@ -28,7 +28,7 @@ username_cargois <- 'CARGO'
 password_cargois <- 'dbu1_cargo'
 
 
-#' RODBC MS SQL server connection string 
+#' RODBC MS SQL server connection string
 #' for BIO
 driver_bio <- 'SQL Server'
 server_bio <- 'fr0-bio-p01'
@@ -38,7 +38,7 @@ password_bio <- ''
 trusted_connection_bio <- TRUE # if TRUE connect with windows login and pw
 
 
-#' RMySQL MySQL connection string 
+#' RMySQL MySQL connection string
 #' for FlightRadar 24
 user_fr24 <- "user_ext"
 password_fr24 <- "fr0-dmds-p01"
@@ -53,7 +53,7 @@ list.of.packages <- c("ggplot2", "maps", 'rgeos', 'maptools', 'geosphere', 'ggma
                       "zoo", 'lubridate', "dplyr", "rworldmap",
                       'data.table', 'ggthemes','xts','gridExtra', 'reshape2', 'devtools','DT', 'shinydashboard',
                       'plotly', 'RMySQL','RODBC','googleVis', 'plyr', 'leaflet','htmltools', 'stringdist',
-                      'igraph')
+                      'visNetwork')
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -69,7 +69,7 @@ CargoDBcon <- function(){
   connect_string_cargois <- paste("(DESCRIPTION=",
                                   "(ADDRESS=(PROTOCOL=tcp)(HOST=", host, ")(PORT=", port, "))",
                                   "(CONNECT_DATA=(SID=", sid, ")))", sep = "")
-  
+
   CargoDB <- try(dbConnect(drv, username = username_cargois, password = password_cargois, dbname = connect_string_cargois))
   return(CargoDB)
 }
@@ -94,14 +94,14 @@ if(class(CargoDB) == 'try-error'){
   source('Rscripts/Seabury.SQL.OD.query.R')
   source('Rscripts/Seabury.get.year.R')
   source('Rscripts/Yield_Cargo_evolution.R')
-  
+
   source('Rscripts/CargoIS.get.input.list.R')
   choice.year <- list_cargois_year(CargoDB)
   choice.city <- list_cargois_city(CargoDB)
   choice.region.cargois <- list_cargois_region(CargoDB)
   choice.country <- list_cargois_country(CargoDB)
   choice.airport <- list_cargois_airport(CargoDB)
-  
+
   source('Rscripts/Seabury.get.input.list.R')
   choice_year_sea <- list_sea_year(CargoDB)
   choice.region.seabury <- list_sea_region(CargoDB)
@@ -113,7 +113,7 @@ if(class(CargoDB) == 'try-error'){
 ############ connect to BIO SQL server ##############
 library(RODBC)
 BIOcon <- function(){
-  connect_string_bio <- paste0('driver={', driver_bio, '}; server=', server_bio, ',', port_bio, '; ', 
+  connect_string_bio <- paste0('driver={', driver_bio, '}; server=', server_bio, ',', port_bio, '; ',
                               'trusted_connection=true')
   BIO <- try(odbcDriverConnect(connect_string_bio
                               # 'driver={SQL Server};
@@ -139,7 +139,7 @@ FR24con <- function(){
   for(con in all_cons){
     dbDisconnect(con)
   }
-  FR24 <- try(dbConnect(MySQL(), user=user_fr24, password=password_fr24, 
+  FR24 <- try(dbConnect(MySQL(), user=user_fr24, password=password_fr24,
                         dbname=dbname_fr24, host=host_fr24))
   return(FR24)
 }
@@ -152,7 +152,7 @@ if(class(FR24) == 'try-error'){
   source('Rscripts/Connecxion MySQL.R')
   source('Rscripts/Fr24.get.input.list.R')
   choice.ACtype.fr24 <- list_fr24_ACtype()
-  
+
 }
 
 library(googleVis)
@@ -171,7 +171,7 @@ library(dplyr)
 library(rworldmap)
 
 library(stringdist)
-
+library(visNetwork)
 library(leaflet)
 library(htmltools)
 

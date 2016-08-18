@@ -1,8 +1,11 @@
 ######## Plot.air.route.html (Plotly) ##########
 
+#' PLOT air routes for yield calculator
+#' 
+
 Plot.air.route.html = function(apt_pair, pt.color = '#3498DB', ln.color = '#3498DB' , projection = 'Mercator', point_size = 8,width = 950, height = 600){
-  x = apt_pair
-  names(x) = c('airport', 'cnt', 'lsize')
+  # x = apt_pair
+  # names(x) = c('airport', 'cnt', 'lsize')
   
   if(projection=='Mercator'){
     geo <- list(
@@ -46,18 +49,21 @@ Plot.air.route.html = function(apt_pair, pt.color = '#3498DB', ln.color = '#3498
     )
   }
 
-  count = x
-  count$airport1 = substr(count$airport,1,3)
-  count$airport2 = substr(count$airport,5,7)
-  colnames(count)=c('pair','cnt','lsize','airport1','airport2')
+  count <- data.table(apt_pair[apt_pair$cnt != 0,])
+  # count$airport1 = count$ORG #substr(count$airport,1,3)
+  # count$airport2 = count$DST #substr(count$airport,5,7)
+  # colnames(count)=c('pair','cnt','lsize','airport1','airport2')
   
-  airport_locations <- get.airport.loc()
+  airport_locations <- data.table(get.airport.loc())
   
-  flights.ag = count
-  colnames(flights.ag) = c('pair','freq','lsize','From','To')
+  # flights.ag = count
+  # colnames(flights.ag) = c('pair','freq','lsize','From','To')
+  # OD <- left_join(flights.ag, airport_locations, by=c("From"="IATA") )
+  # OD <- left_join(OD, airport_locations, by=c("To"="IATA") )
   
-  OD <- left_join(flights.ag, airport_locations, by=c("From"="IATA") )
-  OD <- left_join(OD, airport_locations, by=c("To"="IATA") )
+  OD <- merge(count, airport_locations, by.x = 'ORG', by.y = 'IATA', all.x = TRUE, all.y = FALSE)
+  OD <- merge(OD, airport_locations, by.x = 'DST', by.y = 'IATA', all.x = TRUE, all.y = FALSE)
+  
   OD$id <-as.character(c(1:nrow(OD))) #create and id for each pair
   
   OD.nodata = OD[is.na(OD$long.x)== T | is.na(OD$long.y)== T ,]
@@ -68,8 +74,11 @@ Plot.air.route.html = function(apt_pair, pt.color = '#3498DB', ln.color = '#3498
     
     warn = paste("Can not find the airport code in the database:",OD.nodata$pair)
     warning(warn)
+    
   } else {
-    p = plot_ly(OD, lon = c(long.x,long.y), lat = c(lat.x, lat.y), text = c(substr(OD$pair,1,3),substr(OD$pair,5,7)), type = 'scattergeo',
+    p = plot_ly(OD, lon = c(long.x,long.y), lat = c(lat.x, lat.y), 
+                text = c(as.character(ORG), as.character(DST)), 
+                type = 'scattergeo',name = 'Airport',
                 mode = "markers+text", textposition  = 'top middle',
                 marker = list(size = point_size, color = pt.color),
                 inherit = FALSE) %>%
@@ -77,7 +86,7 @@ Plot.air.route.html = function(apt_pair, pt.color = '#3498DB', ln.color = '#3498
       add_trace(lon = list(long.x, long.y), lat = list(lat.x, lat.y),
                 # group = id, opacity = (freq/max(freq))^1.5, data = OD,
                 group = id, opacity = lsize , data = OD,
-                mode = 'lines', line = list(width = (freq/max(freq)*3)^2, color = ln.color),
+                mode = 'lines', line = list(width = (cnt/max(cnt)*3)^2, color = ln.color),
                 type = 'scattergeo') %>%
       
       layout(geo = geo, showlegend = FALSE,width = width, height = height)

@@ -2,8 +2,36 @@
 #               grs_net_yield                    #
 ##################################################
 
-#########################
+grs_net_yield2 <- function(dt, routes){
+  #### FAST SPEED YIELD CALCULATOR ####
+  
+  # routes: two column data set: ORG DST
+
+  routes_dt <- data.table(routes)
+  colnames(routes_dt) <- c('ORG', 'DST')
+  # routes_dt$merge <- routes_dt[,]
+  
+  origin <- routes_dt$ORG
+  destination <- routes_dt$DST
+  
+  data2 <- data.table(dt)
+  yield <- data2[,.(total_weight = sum(WEIGHT_CURRENT_YEAR), 
+                              Charges = sum(WEIGHT_CHARGES_CURR_YEAR_USD),
+                              Surcharges = sum(OTHER_CHARGES_CURR_YEAR_USD),
+                              'gross_yield' =  (sum(WEIGHT_CHARGES_CURR_YEAR_USD)+sum(OTHER_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR),
+                              'net_yield' = (sum(WEIGHT_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR)), 
+                           by = .(ORG = ORIGIN_AIRPORT_CODE, DST = DESTINATION_AIRPORT_CODE)
+                           ]
+  output <- yield[(paste(ORG, DST) %in% paste(origin, destination))]
+  result <- merge(routes_dt, output, by = c('ORG', 'DST'), all.x = TRUE, all.y = FALSE)
+  return(data.frame(result))
+}
+
+
+
 grs_net_yield = function(dataset, ori_airport, dst_airport){
+  #### DEPRECIATED ####
+  
   # # select proper year
   # database = cargo[cargo$SALES_YEAR == year,]
   # # create proper subset
@@ -47,7 +75,8 @@ grs_net_yield = function(dataset, ori_airport, dst_airport){
 }
 
 ## 
-output_yield = function(dataset, city_list, path = paste(TEMPS,'/yield',sep = '') ){
+output_yield = function(dataset, city_list){
+  #### DEPRECIATED ####
   output = NA
   for (i in 1:nrow(city_list)){
     ORI = as.character(city_list[i,1])
@@ -56,9 +85,18 @@ output_yield = function(dataset, city_list, path = paste(TEMPS,'/yield',sep = ''
   }
   
   out = output[-1,]
-  # write.csv(out, file = path)
+  # if(write){
+  #   write.csv(out, file = path)
+  # }
   return(out)
 }
+
+
+# system.time(data.frame(grs_net_yield2(dt = dt, routes = routes)))
+# system.time(output_yield(dt, routes))
+
+
+
 
 # city_list <- data.frame( ORG = c('CDG',"PVG"), DST = c('LAX', 'FRA'))
 # 

@@ -485,9 +485,28 @@ On the bottom of the page, the data table used for creating the charts is displa
 
 #### Explaination
 <!-- TRY TO USE data.table -->
-Before creating the charts, data manipulation should be done in order to have the right data to plot. 
+Before creating the charts, data manipulation should be done in order to have the right data to plot. `data.table` is a very powerful package for big data computing.
 
-TO create these charts, the package `ggplot2` is extensively used. 
+```{r eval=FALSE, echo=TRUE}
+# Example of data.table
+
+system.time(
+  output <- dt[,.(weight = sum(WEIGHT_CURRENT_YEAR), 
+                freq = sum(AWB_COUNT_CURRENT_YEAR),
+                wchg = sum(WEIGHT_CHARGES_CURR_YEAR_USD),
+                surchg = sum(OTHER_CHARGES_CURR_YEAR_USD),
+                gy = (sum(WEIGHT_CHARGES_CURR_YEAR_USD)+
+                         sum(OTHER_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR),
+                ny = (sum(WEIGHT_CHARGES_CURR_YEAR_USD))/sum(WEIGHT_CURRENT_YEAR)
+                ), by = .(dist = lebal, wb = WEIGHT_BREAK)
+              ]
+)
+# dt is a 1 750 000*15 data.table,
+# user  system elapsed 
+# 0.14    0.00    0.14 
+```
+
+To create these charts, the package `ggplot2` is extensively used. 
 
 ### Yield Calculator
 
@@ -509,7 +528,8 @@ On the left, you can choose the map projection, the comparing criteria and some 
 
 #### Explaination
 
-Figure 13 show the process to 
+Figure 13 show the data manipulation procedure. Two input are used. The first one is the uploaded `csv` file and the second one is the Cargo IS data of the selected year (queried by `CargoIS.SQL.query()`). The function `grs_net_yield()` calls the package `data.table` and computes cargo yield for every air route of this data. The yield table will be merged with the uploaded air route list. After merging, the data table will be displayed on the top right of the page and the function `Plot.air.route.html()` will be call to further generate a map.
+
 \begin{figure}[!h]
   \centering
   \includegraphics[width=470px]{img/flowchart_cargois_yld_calculator.png}
@@ -518,6 +538,16 @@ Figure 13 show the process to
 
 
 ## Seabury Database
+
+The second part of this document consists analysis and visualizations of **Seabury Trade** database. Seabury Trade contains annual country level cargo weight and value information. It has not only the airfeight weight and value, but also for the other surface transportation. It provide an in-depth level of commodity type which could allow us to get some knowledge about the cargo type of the market.
+
+Beside Seabury trade, there two other databases which could be useful for market knowledge. They are Seabury Express and Seabury.
+
+Seabury databases are stored in the same data server as Cargo IS. 
+
+### Seabury Trade 
+
+
 
 ## FlightRadar 24 Database
 
@@ -531,13 +561,23 @@ You can click on the icon to see the detailed connection information.
 
 \begin{figure}[!h]
   \centering
-  \includegraphics[width=150px]{img/connection_status_OK.png}
-  \caption{All the connections are succeed}
+  \includegraphics[width=350px]{img/connection_status_OK.png}
+  \caption{Connection succeed/failed}
 \end{figure}
 
 #### Explaination 
 
-Each time when a new session of **CDM** starts, it will try to make a connection to these databases and check the class of the connector. If the class of all the connectors are not `'try-error'`, the value `OK` will be given to the variables `statu_cargois`, `statu_bio` and `statu_fr24`. 
+Each time when a new session of **CDM** starts, it will try to make a connection to these databases and check the class of the connector by using `try()`. It will return "try error" in the case that the connection to databases could not be established.
+
+```{r eval=FALSE, echo=TRUE}
+
+CargoDB <- try(dbConnect(drv, username = username_cargois, password = password_cargois, dbname = connect_string_cargois))
+
+```
+
+If the class of all the connectors are not `'try-error'`, the value `OK` will be given to the variables `statu_cargois`, `statu_bio` and `statu_fr24`, which will determine the color and the text output of the header's notification.
+
+**IMPORTANT**: Functions related to a database will be loaded only if the database could be reached.
 
 ### Fast selectize input
 

@@ -1562,12 +1562,12 @@ WHERE COMPLETION_STATUS=0\n"
     }
   )
   # ****Data review**** ####
-  output$test_fr24 <- renderDataTable({
+  output$raw_fr24 <- renderDataTable({
     FR24_datatable()
     # BIO_AC()
   })
 
-  output$text_fr24 <- renderDataTable({
+  output$BIO_fr24 <- renderDataTable({
     FR24_BIO_AC()
 
   })

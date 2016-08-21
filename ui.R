@@ -628,10 +628,10 @@ fluidrow_FR24_load <- fluidPage(
   fluidRow(
     
     box(title = 'FlightRadar24 raw data preview', width = 12,status = 'danger',
-        dataTableOutput('test_fr24')),
+        dataTableOutput('raw_fr24')),
     box(title = 'FR24 with BIO AC_TYPE',width = 12, status = 'warning',
         p('if there is no information after [LANDING_TIME], this means that this aircraft is nolonger in service today. We do not have the current status in BIO database.'),
-        div(dataTableOutput('text_fr24'),
+        div(dataTableOutput('BIO_fr24'),
             style = 'overflow-x: scroll')),
     
     tableOutput('test_fr24_tab')

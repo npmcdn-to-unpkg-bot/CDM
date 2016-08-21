@@ -1,0 +1,5 @@
+#TODO 
+
+21/08/2016:
+    - CDM fr24 data loading process: merge directly BIO data with FR24 without clicking "Enrich" with BIO  
+    - 

@@ -2,7 +2,7 @@
 title: "User Guide of Cargo Data Miner"
 author: "Xuzhou Qin"
 date: "10 August 2016"
-output: 
+output:
   pdf_document:
     fig_caption: yes
     includes:
@@ -10,6 +10,9 @@ output:
     number_sections: yes
     toc: yes
     toc_depth: 3
+  word_document:
+    toc: yes
+    toc_depth: '3'
 ---
 
 ```{r setup, include=FALSE}
@@ -75,7 +78,7 @@ The present work benefited from Oliver Von-Tronchin, tutor of my internship and 
 
 
 
-
+\newpage
 # Introduction
 Aviation market is a highly complex and data-dependent market. Inside Airbus, numbers of different servers are deployed to stock, manage and provide database services to support our daily work. It is striving to introduce data digitalization as a core task of its future plan. The raising importance of data has already grabbed the attention of the managers and it will never stop growing. However, face to the massive amount of data, challenge still remains. 
 
@@ -621,25 +624,94 @@ The data table will be displayed in the last sub-tab.
 <!-- ____________FlightRadar 24___________ -->
 ## FlightRadar 24 Database
 
-**FlighRadar 24** is a renctly purchased database at Airbus. It provides flight tracks, origins and destinations, flight numbers, registration numbers, flight positions (coordinates), altitude, heading and speed for 2014 and 2015. The data of FR24 mainly comes from the third party ADS-B (Automatic dependent surveillance-broadcast) receivers all over the world. The receivers collect data from any aircraft in their local aera that are equipped with an ADS-B transponder and upload to the internet in the real time. 
+**FlighRadar 24** (FR24) is a rencently purchased database at Airbus. It is a Swedish internet-based service that provides aircraft flight information. The database that Airbus purchased from FR24 includs flight tracks, origins and destinations, flight numbers, registration numbers, flight positions (coordinates), altitude, heading and speed during 2014 and 2015. The data of FR24 mainly comes from the third party ADS-B (Automatic dependent surveillance-broadcast) receivers all over the world. The receivers collect data from any aircraft in their local aera that are equipped with an ADS-B transponder and upload to the internet in the real time. 
 
-FR24 could be very valuable for Airbus freighter because it may fill the gap of the lack of express cargo airlines' data. With FR24, we could extract the schedule of these airlines, which we did not have any information before.
+FR24 could be very valuable for Airbus freighter because it may fill the gap of the lack of express cargo airlines' data. In an other flight schedule database **OAG**, there is no data for express cargo airlines (like **UPS**, **FedEx** or **DHL**). However with FR24, we may be able to extract the real flight program <!--what is the right word?--> of these airlines, which we did not have any information before.
 
 But, comparing with other databases, it has some particularities. 
 
-* We have two stock location for this database. The first one is the **MySQL** server inside airbus (which is used by **CDM**). The second one is the cloud-based platform **Foundry**. 
-* The data size is way larger than the other databases. Because it records the real-time position of aircraft, so we have about 1-2 Gb of data per day. 
-<!-- ask aur?lien -->
-* The data quality of FR24 is a major challenge for analysis. For example in the column "Aircraft Type", we have several different codes representing the same aircraft (*e.g.* both B77F, B77L, 77L and 77F represent Boeing 777 freighter)
+* We have two stock location for this database. The first one is the **MySQL** server inside airbus (which is used by **CDM**). The second one is the cloud-based platform **Foundry** (could be queried by SparkR on Foundry). 
 
+* The data size is way larger than the other databases. Because it records the real-time position of aircraft, so we have about 1-2 Gb of data per day. **CDM** mainly uses the air routes data (which means Origin-Destination information). So I could still manipulate the data on my own desktop. But in the future, if we will need to use the position data of FR24, more computing capability will be necessairy. 
+<!-- ask aur?lien -->
+
+* The data quality of FR24 is a major challenge for analysis. For example here I list three major problems of the database:
+    
+    1. Missing values in the data table are very frequent.
+
+    2. There may be several different values indexing one same thing (*e.g.* In the column "Aircraft Type", both B77F, B77L, 77L and 77F represent Boeing 777 freighter).
+
+    3. The data could be merged incorrectly at the very begining of ADS-B raw data manipulation (*e.g.* the aircraft type of an aircraft registration number is not correct). This could be a problem of FlightRadar24 raw data.
+
+These problems should be solved through two approaches. On one hand, we must return our feedback to FR24 in order to improve the data quality in the raw data level. On the other hand, inside Airbus, we will need to find a efficient method to detect and correct abnormal values in the database (See the section *Further development* for more details.)
 
 ### Data loader
 
+Due to the insufficient data quality, the data loading process of FR24 will be a bit more complexe than the two previous databases. It will be done in two step.
+
+First of all, **CDM** queries FR24 database according to user's input. Then, it will merge FR24 data with our BIO data by the registration number, in order to improve the data quality.
+
 #### Instruction
+
+To load the database, you have to precise the data range (by clicking and navigating through the data range selection panel). Then there are several parameters can be set according to the user's need (none of the following parameters is obligatory).
+
+* Airline: Select the airline(s) that you want to query
+
+* Origin: Filter by the origin airport.
+
+* Destination: Filter by the destination airport.
+
+    + If Destination is missing, **CDM** will query all the flights that leave the origin airport
+    + If Origin is missing, it will query all the flights that fly to the destination airport
+    + If Origin is the same as the Desination, it will query all the flights of the selected airport
+    + If both Origin and Destination are missing, it will not filter the data by O&D
+    
+* Registration number: Filter by the aircraft registration number(s)
+
+* Aircraft type: Filter by the aircraft type(s)
+
+By modifying the parameters, **CDM** generates automatically a SQL query that corresponds to your request. And the query text is showed in the text aera. If you are familiar with MySQL, you can directly modify it in the text box to create a more customizd query. To solve the problem 1, the query will ignore all the data with a missing origin or destination.
+
+Then click on the button **Query** to query FR24 database. The summary of FR24 data will be showed on the top right of the current tab. Then on the bottom of the page, a new box called *Data Cleaner* will appear. It will allow you to further remove the outliers in the returned data table in order to solve the problem 3.
+
+After selecting the appropriated parameters in data cleaner box, click on the blue button **Enrich with BIO** to query BIO and merge it with the FR24 data table. The idea is to used the cleaned BIO data to replace the original data in order to solve the problem 2. A bar chart will appear on the top right showing the distribution of a selected variable. Here again, you could check the data quality and remove the outliers by looking at its frequency.
+
+The merged data can be downloaded by clicking on the download button.
 
 #### Explaination
 
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=470px]{img/flowchart_fr24_dataloading.png}
+  \caption{The data loading process of FR24}
+\end{figure}
+
+FR24 is stocked on a MySQL server inside Airbus. So the first step is to generate a SQL query that fits user's request. By using logical operators and string manipulation, the output query string is stored in `FR24_query()`. The text aera shows the content of `FR24_query()` and could be modified by keyboard. 
+Then, when the button **Query** is clicked, `input$go2_fr24` will trigger the SQL query. The query result will be stocked in `FR24_datatable()`. The infoboxes will be created based on some descriptive statistics and the preview of data table will be returned as well.
+
+Because of the data quality, I would like to create another filter process to detect the outliers in the data in order to further refine the data quality. The idea is to return the abnormal value in the **Data cleaner** box and let the user decide whether to keep it or not.
+
+  * Registration number: The aircraft registrations are strings containing five or six characters. To detect the abnormal value, I used the package `stringdist` to compute the **Jaro-Winkler** distance between each of these numbers. Then I cluster these registration numbers based on the distance matrix. I list the least presented clusters to the user so that the user could select and remove the incorrect values.
+  
+  * The other three variables contains normally less values than the registration number, so they could by entirely listed and selected by user.
+  
+When the button **Enrich with BIO** is clicked, it will trigger the query of BIO database (**CDM** will match the BIO data by the registration number in FR24 database) and a data table containing detailed information of the aircraft will be returned and stored in `FR24_BIO_AC()`. You will see the preview of data table `output$BIO_fr24` and a bar chart `output$fr24_freq_check_dt_quality`.
+
 ### Airline network
+
+#### Instruction
+
+<!-- add coordinates of airport  -->
+A map showing the location of every airport in the queried FR24 data table will be displayed after the data loading process. You could click on the markers to see the airport IATA code and airport name. In the tab **Network Analysis**, the network of the data table will be extracted and visulaized.
+
+Every circle on the map represents an airport. The size represents its importance in the network. All the circles are colored by their corresponding region. You can filter the airports by their regions by clicking the dropdown menu on the top left.
+
+The arrow shows the direction of the airfreight flow. 
+
+You can click on an airport to filter all its neighbour airports (airports that are directly linked to this airport). You can also drag the circle to change its position. 
+
+#### Explaination
+
 
 
 ## Other features
@@ -672,8 +744,59 @@ If the class of all the connectors are not `'try-error'`, the value `OK` will be
 
 **IMPORTANT**: Functions related to a database will be loaded only if the database could be reached.
 
-### Fast selectize input
+### Server-side selectize input
 
+There are several different methods to have a reactive select input. For example `uiOutput() + renderUI({selectInput()})`. But in some situation, the input contains too many elements so that the proformence of `renderUI()` may be insufficient. In this situation, `selectizeInput() + updateSelectizeInput()` will be very useful. 
+
+```{r eval=FALSE, echo=TRUE}
+# Example
+# in ui.R
+selectizeInput('foo', choices = NULL, ...)
+
+# in server.R
+shinyServer(function(input, output, session) {
+  updateSelectizeInput(session, 'foo', choices = data, server = TRUE)
+})
+```
+
+The server-side selectize input uses R to process searching, and R will return the filtered data to selectize. It is widely use in **CDM** and it greatly boosts the interactive performance.
+
+### User session log (still under development)
+
+The idea of this feature is to create a interface where the experienced R user could get the system log information and interactive with R by coding. But now I still did not find a way to capture the R consol's output and return it into **CDM**. Now you can only call a "so-called" console of **CDM** by pressing the `~` button of your keyboard. It will display your detailed connection status.
+
+This feature is done by using a JS script.
+```{r eval=FALSE, echo=TRUE}
+# ui.R
+fluidRow(
+         htmlOutput("consol"),
+         tags$script('
+                     $(document).on("keypress", function (e) {
+                     Shiny.onInputChange("key_track", e.which);
+                     });
+         ')
+)
+
+
+# server.R
+output$consol <- renderUI({
+    show = FALSE
+    
+    if(is.null(input$key_track)){
+      
+    } else if (input$key_track == 126) {
+      show <- TRUE
+    }
+    
+    if(show){
+      
+      HTML('<!-- HTML CODE HERE -->')
+
+    } else {
+      p('')
+    }
+  })
+```
 
 
 # Future Development

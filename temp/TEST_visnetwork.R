@@ -4,7 +4,7 @@ install.packages('sna')
 library(sna)
 library(visNetwork)
 
-data <- fread('C:/Users/QIN_XUZ/Downloads/FlightRadar24 2016-08-17 09_53_43.csv')
+data <- fread('C:/Users/QIN_XUZ/Downloads/FlightRadar24 2016-08-19 10_17_13.csv')
 # data <- data[sample(nrow(data)/100),]
 
 
@@ -79,27 +79,38 @@ visNetwork(nodes, edges, height = "500px") %>%
 
 data
 routes
+
+routes[(ORG == 'XIY' & DST == 'PEK')]
+
 mtx <- get.adjacency(graph_from_edgelist(as.matrix(routes), directed = TRUE))
+dt_trx <- as.matrix(mtx)
 
-net=graph.adjacency(mtx,mode="directed",weighted=TRUE,diag=FALSE)
 
-centr_degree(mtx)$centralization
+net= graph.adjacency(mtx,mode="directed",diag=FALSE)
+
+centr_degree(net)$centralization
 
 
 E(net)$weight
 
 data.table(name = names(closeness(net)),closeness(net))
 data.table(name = names(betweenness(net)),betweenness(net))
+
 betweenness(net)
 
 
 diameter(net)
 get.shortest.paths(net)
-distances(net)
+dt <- distances(net, mode = 'out', algorithm = 'dijkstra')
 
-shortest_paths(net, 'TAO', 'SYD')
+distance_table(net, directed = TRUE)
+
+shortest_paths(net, 'CNX')
 
 g <- make_ring(10)
+
+
+
 distances(g)
 shortest_paths(g, 5)
 all_shortest_paths(g, 1, 6:8)

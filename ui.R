@@ -25,140 +25,128 @@ library(shinydashboard)
 #===============================================
 
 ## cargo.is.input: Cargo IS query input ##########
-cargo.is.input <- box(width = 4,
-                      title = 'Cargo IS query', status = 'warning', solidHeader = TRUE,
-                      selectizeInput(
-                        'level', 'Query level', choices = choice.level
-                      ),
-                      # selectizeInput(
-                      #   'year', 'Year', choices = choice.year
-                      # ),
-                      uiOutput(
-                        'year_cargois_ui'     ),
-                      
-                      # uiOutput(
-                      #   'cargois_ui_org'
-                      # ),
-                      # uiOutput(
-                      #   'cargois_ui_dst'
-                      # ),
-                      
-                      selectizeInput('org', 'Origin', choices = NULL),
-
-                      selectizeInput('dst', 'Destination', choices = NULL),
-                      
-                      # textInput('org','Origin'),
-                      # textInput('dst','Destination'),
-                      
-                      checkboxInput('yld_evo', 'Plot evolution since 2010 (this could take several minutes)',
-                                    FALSE),
-                      # checkboxInput('min_max_avg', 'Show min/max/average',
-                      #               FALSE),
-                      actionButton('go2','Load data',
-                                   style="color: #fff; background-color: #337ab7; border-color: #2e6da4") ,
-                      downloadButton('dl_cargo_is', 'Download raw data')
-                      
-                      #htmlOutput("text2")
+fluidpage.cargois.dataloader <- fluidPage(
+  
+  fluidRow(
+    valueBoxOutput('box.count_obs',width = 2),
+    valueBoxOutput('box.count_apt_pair',width = 2),
+    valueBoxOutput('box.count_ORG',width =2),
+    valueBoxOutput('box.count_DST',width = 2),
+    valueBoxOutput('box.avg_weight',width = 2),
+    valueBoxOutput('box.ave_yield',width = 2)
+  ),
+  
+  fluidRow(
+    box(width = 12, title = 'Cargo IS query', solidHeader = TRUE, status = 'success',
+        fluidRow(
+          column(4,
+                 selectizeInput(
+                   'level', 'Query level', choices = choice.level
+                 ),
+                 
+                 uiOutput(
+                   'year_cargois_ui'     ),
+                 
+                 selectizeInput('org', 'Origin', choices = NULL),
+                 
+                 selectizeInput('dst', 'Destination', choices = NULL),
+                 
+                 
+                 checkboxInput('yld_evo', 'Plot evolution since 2010 (this could take several minutes)',
+                               FALSE),
+                 
+                 actionButton('go2','Load data',
+                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4") ,
+                 downloadButton('dl_cargo_is', 'Download raw data')
+                 
+          ), # end col
+          column(8,
+                 div(dataTableOutput('table_preview'), style = 'overflow-x: scroll')
+          ) # end col
+        ) # end frow
+    ) # end box
+  ) # end frow
 )
-
-## valueboxes: value Boxes #######
-
-valueboxes = fluidRow(
-                valueBoxOutput('box.count_obs',width = 2),
-                valueBoxOutput('box.count_apt_pair',width = 2),
-                valueBoxOutput('box.count_ORG',width =2),
-                valueBoxOutput('box.count_DST',width = 2),
-                valueBoxOutput('box.avg_weight',width = 2),
-                valueBoxOutput('box.ave_yield',width = 2)
-              )
-
-## cargo.is.preview: preview the table DATA #########
-cargo.is.preview <-  box(width = 8, title = 'Preview of the first 50 rows',
-                         div(dataTableOutput('table_preview'), style = 'overflow-x: scroll')
-                     )
 
 ## top.airport: top airport, air routes ########
-
-
-top.airport = 
-
-
-
-fluidrow.top_apt_inputs <- fluidRow(
-                    box(width = 4,                            
-                    sliderInput('pt.size.top.apt','Select the point size',
-                               min = 1, max = 100, value = 50),
-                    sliderInput('nb.top','Enter the number of airport/air routes to display',
-                              min = 1, max = 50, value = 20),
-                    p('thickness = weight, color = yield')
-                    ),
-                                    
-                    
-                    tabBox(width = 8,
-                                 tabPanel(title = 'Top Airport',
-                                         # div(style="display:inline-block",
-                                    #     sliderInput('pt.size.top.apt','Select the point size', 
-                                    #                 min = 1, max = 100, value = 50)),
-                                    # div(style="display:inline-block",
-                                    #     sliderInput('nb.top','Enter the number of airport/air routes to display',
-                                    #                 min = 1, max = 50, value = 20)),
-
-                                    # sliderInput('pt.size.top.apt','Select the point size', 
-                                    #             min = 1, max = 100, value = 50),
-                                    # sliderInput('nb.top','Enter the number of airport/air routes to display',
-                                    #             min = 1, max = 50, value = 20),
-
-                                    plotlyOutput('top.airport')),
-                                           
-                                    tabPanel(title = 'Top air route (O&D)', plotlyOutput('top.air.route'))
-                                    
-                                ),####
-                    
-                    tabBox(width = 12,
-                           tabPanel(title = 'Airports data table', DT::dataTableOutput('topairport.table')),
-                           tabPanel(title = 'Air routes data table', DT::dataTableOutput('topairroute.table'))
-                           )
+fluidpage.top_apt_inputs <- fluidPage(
+  fluidRow(
+    box(width = 12, title = 'Top Airports/Air routes', solidHeader = TRUE, status = 'success',
+        fluidRow(
+          column(4,
+                 sliderInput('pt.size.top.apt','Select the point size',
+                             min = 1, max = 100, value = 50),
+                 sliderInput('nb.top','Enter the number of airport/air routes to display',
+                             min = 1, max = 50, value = 20),
+                 p('thickness = weight, color = yield')
+          ),
+          column(8,
+                 fluidRow(
+                   tabBox(width = 12,
+                          tabPanel(title = 'Top Airport',
+                                   plotlyOutput('top.airport')),
+                          
+                          tabPanel(title = 'Top air route (O&D)', plotlyOutput('top.air.route'))
+                          
+                   )
+                 )
+          )
+        )
+    )
+  ),
+  fluidRow(
+    tabBox(width = 12,
+           tabPanel(title = 'Airports data table', 
+                    DT::dataTableOutput('topairport.table'),
+                    icon = icon('plane')),
+           tabPanel(title = 'Air routes data table', DT::dataTableOutput('topairroute.table'))
+    )
+  )
 )
 
+
 ## fluidrow.Treemap: Cargo IS origin/destination treemaps ########
-fluidrow.Treemap = fluidRow(
-                    tabBox(
-                      title = 'Origin Countries Treemap', 
-                      # tabPanel('Plot',plotOutput('tree.org_cty')),
-                      
-                      tabPanel('Plot',
-                               div(htmlOutput('tree.org_cty_gvis'), 
-                                   style = 'overflow-x: scroll')),
-                      
-                      tabPanel('Table', dataTableOutput('tree.org_cty_dtable'))
-                    ),
-                    
-                    tabBox(
-                      title = 'Destination Countries Treemap', 
-                      
-                      tabPanel('Plot', 
-                               div(htmlOutput('tree.dst_cty_gvis'), 
-                                   style = 'overflow-x: scroll')),
-                      
-                      tabPanel('Table', dataTableOutput('tree.dst_cty_dtable'))
-                    )
-                  )
+fluidpage.cargois.treemap <- fluidPage(
+  fluidRow(
+    box(width = 12,
+        fluidRow(
+          column(6,
+                 tabBox(width =12,
+                   title = 'Origin Countries Treemap', 
+                   # tabPanel('Plot',plotOutput('tree.org_cty')),
+                   
+                   tabPanel('Plot',
+                            htmlOutput('tree.org_cty_gvis')),
+                   
+                   tabPanel('Table', dataTableOutput('tree.org_cty_dtable'))
+                 )
+                 ),
+          column(6,
+                 tabBox(width =12,
+                   title = 'Destination Countries Treemap', 
+                   
+                   tabPanel('Plot', 
+                            htmlOutput('tree.dst_cty_gvis')),
+                   
+                   tabPanel('Table', dataTableOutput('tree.dst_cty_dtable'))
+                 )
+                 )
+        )
+        )
+  )
+  
+)
+
 
 ## fluipage.Yield_evo: Yield evolution ########
 fluipage.Yield_evo =fluidPage(
   
-                      fluidRow(tabBox(width = 12,
-                      #    
-                      #     # actionButton('go.allvalue','Yield evolution plot'),
-                      # tabPanel( title = 'Yield Evolution',  plotlyOutput('evo_yield')),
-                      # tabPanel('Weight Evolution',plotlyOutput('evo_weight') ),
-                      # tabPanel('Table', dataTableOutput('evo_plot_dtable')),
-                      tabPanel('Yield Evolution', 
-                               div(htmlOutput('yld_evo_cargois_gvis'),
-                                  style = 'overflow-x: scroll'))
-                      
-                      # tabPanel('Table', dataTableOutput('evo_plot_dtable'))
-                      )),
+                      fluidRow(
+                        tabBox(width = 12,
+                          tabPanel('Yield Evolution', 
+                                   htmlOutput('yld_evo_cargois_gvis'))
+                        )
+                      ),
                       
                       fluidRow(
                         box(width = 12,title = 'Data table',
@@ -225,7 +213,7 @@ box.yield.calc.map.out <- box(width = 9, height = 700,
                               plotlyOutput('map')
 )
 
-## fluidRow.other_analysis ####
+## AWB_analysis ####
 fluidRow.other_analysis <- fluidPage(
   
   # _input parameters ####
@@ -254,54 +242,57 @@ fluidRow.other_analysis <- fluidPage(
   #   ),
   
     fluidRow(
-      column(width = 3, 
-          box(title = 'Parameters', 
-              solidHeader = TRUE,
-              status = 'warning',uiOutput('select_wb'),width = '100%',
-              
-              radioButtons('cargois_versus_plot_gyny','Choose the yield',
-                          choices = list('Gross yield' = 'gy',
-                                         'Net yield' = 'ny')),
-              
-              # radioButtons('cargois_versus_plot_avg_para', 'Choose the arithmetic',
-              #              choices = list('Average yield' = 'normal',
-              #                             'Weighted average yield' = 'weight')),
-              
-              textInput('cargois_width','Set the width of download file',30),
-              
-              textInput('cargois_height','Set the height of download file',15)
+      box(width = 12, title = 'Air Waybill analysis', solidHeader = TRUE, status = 'success',
+          fluidRow(
+            column(3,
+                   h4('Parameters'),
+                   
+                   uiOutput('select_wb'),
+                   
+                   radioButtons('cargois_versus_plot_gyny','Choose the yield',
+                                choices = list('Gross yield' = 'gy',
+                                               'Net yield' = 'ny')),
+                   
+                   # radioButtons('cargois_versus_plot_avg_para', 'Choose the arithmetic',
+                   #              choices = list('Average yield' = 'normal',
+                   #                             'Weighted average yield' = 'weight')),
+                   
+                   textInput('cargois_width','Set the width of download file',30),
+                   
+                   textInput('cargois_height','Set the height of download file',15)
+                   ),
+            column(9,
+                   fluidRow(
+                     tabBox(width = 12, 
+                            tabPanel('Shipment freq evoluion', plotOutput('freq_shipment_evo'),
+                                     downloadButton('cargois_dl_freq_shipment_evo', 'download PNG')
+                            ),
+                            
+                            tabPanel('Shipment weight distribution', plotOutput('dist_weight_awb'),
+                                     downloadButton('cargois_dl_dist_weight_awb', 'download PNG')
+                            ),
+                            
+                            tabPanel('Weight vs Distance',plotOutput('cargois_corr_plot'),
+                                     downloadButton('cargois_dl_weight_distance', 'download PNG')
+                            ),
+                            tabPanel('Frequency vs Distance', plotOutput('cargois_freq_distance'),
+                                     downloadButton('cargois_dl_freq_distance', 'download PNG')
+                            ),
+                            tabPanel('Revenue vs Distance', plotOutput('cargois_revenu_distance'),
+                                     downloadButton('cargois_dl_revenu_distance', 'download PNG')
+                            ),
+                            tabPanel('Yield vs Distance', plotOutput('cargois_gy_distance'),
+                                     downloadButton('cargois_dl_gy_distance', 'download PNG')
+                            ),
+                            tabPanel('Average weight vs Distance', plotOutput('cargois_avgweight_distance'),
+                                     downloadButton('cargois_dl_avgweight_distance', 'download PNG')
+                            )
+                     )
+                   )
+                   )
           )
-      ),
-      
-      
-      ## __versus plot ####
-      column(width = 9,
-          tabBox(width = '100%', 
-              tabPanel('Shipment freq evoluion', plotOutput('freq_shipment_evo'),
-                      downloadButton('cargois_dl_freq_shipment_evo', 'download PNG')
-                      ),
-
-              tabPanel('Shipment weight distribution', plotOutput('dist_weight_awb'),
-                      downloadButton('cargois_dl_dist_weight_awb', 'download PNG')
-                    ),
-
-              tabPanel('Weight vs Distance',plotOutput('cargois_corr_plot'),
-                      downloadButton('cargois_dl_weight_distance', 'download PNG')
-                      ),
-              tabPanel('Frequency vs Distance', plotOutput('cargois_freq_distance'),
-                      downloadButton('cargois_dl_freq_distance', 'download PNG')
-                      ),
-              tabPanel('Revenue vs Distance', plotOutput('cargois_revenu_distance'),
-                      downloadButton('cargois_dl_revenu_distance', 'download PNG')
-                      ),
-              tabPanel('Yield vs Distance', plotOutput('cargois_gy_distance'),
-                      downloadButton('cargois_dl_gy_distance', 'download PNG')
-              ),
-              tabPanel('Average weight vs Distance', plotOutput('cargois_avgweight_distance'),
-                      downloadButton('cargois_dl_avgweight_distance', 'download PNG')
-              )
+          
           )
-      )
     ),
   
   fluidRow(
@@ -333,88 +324,171 @@ fluidpage_stat_analysis <- fluidPage(
 # ____________Seabury________ ==================
 #===============================================
 
-## fluidrow_Seabury: Seabury treemaps ########
-fluidrow_Seabury = fluidRow(
-  box(width = 3,
-      title = 'Seabury query', status = 'warning', solidHeader = TRUE,
-      h4(strong('---Treemap---')),
-      selectizeInput(
-        'level.sea', 'Query level', choices = choice.level.sea
-      ),
-      uiOutput('year.sea.ui'),
-      # uiOutput('org.sea.ui'),
-      # uiOutput('dst.sea.ui'),
-      
-      selectizeInput('org.sea', 'Origin', choices = NULL),
-      selectizeInput('dst.sea', 'Destination', choices = NULL),
-      
-      # textInput('org.sea','Origin'),
-      # textInput('dst.sea','Destination'),
-      selectizeInput(
-        'sfc.air', 'Select freight type', choices = choice.sfc.air
-      ),
-      actionButton('go.sea','Draw treemap'),
-      
-      downloadButton('dl_sea_treemap', 'Download data table'),
-      
-      # htmlOutput("text.sea"),
-      ####
-      
-      # br(),
-      h4(strong('---Evolution---')),
-      # textInput('gxname','Enter GXNAME'),
-      # tableOutput('gxcode.finder'),
-      # uiOutput('gxcode.finder_ui'),
-      
-      selectizeInput('gxcode.finder', 'Select the commodity that you want to plot',
-                     choices=NULL),
-      # selectizeInput(
-      #   'gx.query.level', 'Select GX level to query', choices = choice.level.sea.GX.level
-      # ),
-      checkboxInput('surface.air', 'Plot the surface freight (reclick "Plot selected")',
-                    FALSE),
-      checkboxInput('weight.value', 'Plot for the cargo weight (unchecked for the value)',
-                    TRUE),
-      checkboxInput('gx.evo.plot.all', 'Plot all the GX level (this could take several minutes)',
-                    FALSE),
-      actionButton('gx.evo.plot','Plot selected')
-      # actionButton('gx.evo.plot.all','   Plot all   ')
-      
+## fluidpage_Seabury: Seabury treemaps ########
+
+
+fluidpage_Seabury = fluidPage(
+  
+  fluidRow(box(width = 12, collapsible = TRUE, collapsed = TRUE,
+      title = 'Quick Guide', status = 'success', solidHeader = TRUE
+  )),
+  
+  fluidRow(
+    box(width = 12, title = 'Seabury Trade', solidHeader = TRUE,status = 'primary',
+        fluidRow(
+          column(3,
+                 h4(strong('---Treemap---')),
+                 selectizeInput(
+                   'level.sea', 'Query level', choices = choice.level.sea
+                 ),
+                 uiOutput('year.sea.ui'),
+                 # uiOutput('org.sea.ui'),
+                 # uiOutput('dst.sea.ui'),
+                 
+                 selectizeInput('org.sea', 'Origin', choices = NULL),
+                 selectizeInput('dst.sea', 'Destination', choices = NULL),
+                 
+                 # textInput('org.sea','Origin'),
+                 # textInput('dst.sea','Destination'),
+                 selectizeInput(
+                   'sfc.air', 'Select freight type', choices = choice.sfc.air
+                 ),
+                 actionButton('go.sea','Draw treemap'),
+                 
+                 downloadButton('dl_sea_treemap', 'Download data table'),
+                 
+                 # htmlOutput("text.sea"),
+                 ####
+                 
+                 # br(),
+                 h4(strong('---Evolution---')),
+                 # textInput('gxname','Enter GXNAME'),
+                 # tableOutput('gxcode.finder'),
+                 # uiOutput('gxcode.finder_ui'),
+                 
+                 selectizeInput('gxcode.finder', 'Select the commodity that you want to plot',
+                                choices=NULL),
+                 # selectizeInput(
+                 #   'gx.query.level', 'Select GX level to query', choices = choice.level.sea.GX.level
+                 # ),
+                 checkboxInput('surface.air', 'Plot the surface freight (reclick "Plot selected")',
+                               FALSE),
+                 checkboxInput('weight.value', 'Plot for the cargo weight (unchecked for the value)',
+                               TRUE),
+                 checkboxInput('gx.evo.plot.all', 'Plot all the GX level (this could take several minutes)',
+                               FALSE),
+                 actionButton('gx.evo.plot','Plot selected')
+                 # actionButton('gx.evo.plot.all','   Plot all   ')
+              
+          ), # end col
+          column(9,
+            tabBox(width = 12, #height = 700, 
+                   # tabPanel(title = 'G1 treemap', plotOutput('tree.g1', click="click1"),
+                   #          tableOutput('summary')
+                   # ),div(dataTableOutput('table_preview'), style = 'overflow-x: scroll')
+                   tabPanel(title = 'Commodity treemap',
+                            htmlOutput('tree.g1')
+                          ),
+                   # tabPanel(title = 'G2 treemap', plotOutput('tree.g2', click="click2"),
+                   #          tableOutput('summary2')
+                   # ),
+                   # tabPanel(title = 'G3 treemap', plotOutput('tree.g3', click="click3"),
+                   #          tableOutput('summary3')
+                   # ),
+                   # tabPanel(title = 'G4 treemap', plotOutput('tree.g4', click="click4"),
+                   #          tableOutput('summary4')
+                   # )
+                   tabPanel(title = 'Data table', 
+                            dataTableOutput('sea_treemap_table')
+                   )
+            )
+          )
+        )
+    )
   ),
   
-  box(width = 9, collapsible = TRUE, collapsed = TRUE,
-      title = 'How to use?', status = 'success', solidHeader = TRUE
-  ),
-  
-  tabBox(width = 9, height = 700, 
-         # tabPanel(title = 'G1 treemap', plotOutput('tree.g1', click="click1"),
-         #          tableOutput('summary')
-         # ),div(dataTableOutput('table_preview'), style = 'overflow-x: scroll')
-         tabPanel(title = 'Commodity treemap', 
-                  div(htmlOutput('tree.g1'), style = 'overflow-x: scroll')),
-         # tabPanel(title = 'G2 treemap', plotOutput('tree.g2', click="click2"),
-         #          tableOutput('summary2')
-         # ),
-         # tabPanel(title = 'G3 treemap', plotOutput('tree.g3', click="click3"),
-         #          tableOutput('summary3')
-         # ),
-         # tabPanel(title = 'G4 treemap', plotOutput('tree.g4', click="click4"),
-         #          tableOutput('summary4')
-         # )
-         tabPanel(title = 'Data table', 
-                  dataTableOutput('sea_treemap_table')
-         )
-  ),
-  
-  
-  #########  Seabury evolution 
-  tabBox(width = 12, 
-         tabPanel(title = 'G1 level evolution', plotlyOutput('sea.evo1')),
-         tabPanel(title = 'G2 level evolution', plotlyOutput('sea.evo2')),
-         tabPanel(title = 'G3 level evolution', plotlyOutput('sea.evo3')),
-         tabPanel(title = 'G4 level evolution', plotlyOutput('sea.evo4')),
-         tabPanel(title = 'Table', tableOutput('sea.evo.tab') )
+  fluidRow(
+    
+    
+    #########  Seabury evolution 
+    tabBox(width = 12, 
+           tabPanel(title = 'G1 level evolution', plotlyOutput('sea.evo1')),
+           tabPanel(title = 'G2 level evolution', plotlyOutput('sea.evo2')),
+           tabPanel(title = 'G3 level evolution', plotlyOutput('sea.evo3')),
+           tabPanel(title = 'G4 level evolution', plotlyOutput('sea.evo4')),
+           tabPanel(title = 'Table', tableOutput('sea.evo.tab') )
+    )
   )
+  
+  # box(width = 3,
+  #     title = 'Seabury query', status = 'warning', solidHeader = TRUE,
+  #     h4(strong('---Treemap---')),
+  #     selectizeInput(
+  #       'level.sea', 'Query level', choices = choice.level.sea
+  #     ),
+  #     uiOutput('year.sea.ui'),
+  #     # uiOutput('org.sea.ui'),
+  #     # uiOutput('dst.sea.ui'),
+  #     
+  #     selectizeInput('org.sea', 'Origin', choices = NULL),
+  #     selectizeInput('dst.sea', 'Destination', choices = NULL),
+  #     
+  #     # textInput('org.sea','Origin'),
+  #     # textInput('dst.sea','Destination'),
+  #     selectizeInput(
+  #       'sfc.air', 'Select freight type', choices = choice.sfc.air
+  #     ),
+  #     actionButton('go.sea','Draw treemap'),
+  #     
+  #     downloadButton('dl_sea_treemap', 'Download data table'),
+  #     
+  #     # htmlOutput("text.sea"),
+  #     ####
+  #     
+  #     # br(),
+  #     h4(strong('---Evolution---')),
+  #     # textInput('gxname','Enter GXNAME'),
+  #     # tableOutput('gxcode.finder'),
+  #     # uiOutput('gxcode.finder_ui'),
+  #     
+  #     selectizeInput('gxcode.finder', 'Select the commodity that you want to plot',
+  #                    choices=NULL),
+  #     # selectizeInput(
+  #     #   'gx.query.level', 'Select GX level to query', choices = choice.level.sea.GX.level
+  #     # ),
+  #     checkboxInput('surface.air', 'Plot the surface freight (reclick "Plot selected")',
+  #                   FALSE),
+  #     checkboxInput('weight.value', 'Plot for the cargo weight (unchecked for the value)',
+  #                   TRUE),
+  #     checkboxInput('gx.evo.plot.all', 'Plot all the GX level (this could take several minutes)',
+  #                   FALSE),
+  #     actionButton('gx.evo.plot','Plot selected')
+  #     # actionButton('gx.evo.plot.all','   Plot all   ')
+  #     
+  # ),
+  
+
+  
+  # tabBox(width = 9, height = 700, 
+  #        # tabPanel(title = 'G1 treemap', plotOutput('tree.g1', click="click1"),
+  #        #          tableOutput('summary')
+  #        # ),div(dataTableOutput('table_preview'), style = 'overflow-x: scroll')
+  #        tabPanel(title = 'Commodity treemap', 
+  #                 div(htmlOutput('tree.g1'), style = 'overflow-x: scroll')),
+  #        # tabPanel(title = 'G2 treemap', plotOutput('tree.g2', click="click2"),
+  #        #          tableOutput('summary2')
+  #        # ),
+  #        # tabPanel(title = 'G3 treemap', plotOutput('tree.g3', click="click3"),
+  #        #          tableOutput('summary3')
+  #        # ),
+  #        # tabPanel(title = 'G4 treemap', plotOutput('tree.g4', click="click4"),
+  #        #          tableOutput('summary4')
+  #        # )
+  #        tabPanel(title = 'Data table', 
+  #                 dataTableOutput('sea_treemap_table')
+  #        )
+  # ),
+
   
 )
 
@@ -428,72 +502,134 @@ fluidrow_Seabury = fluidRow(
 #         
 fluidrow_FR24_load <- fluidPage(
   fluidRow(
-    
-    # _query ####
-    box( width = 4,
-      title = 'FlightRadar24', status = 'warning', solidHeader = TRUE,
-      dateRangeInput('fr24_daterange', 'Select the range of date',
-                     start = '2015-9-14', end = '2015-9-20', startview = 'year'),
-      # textInput('fr24_airline.code', 'Enter the Airline IATA code'),
-      
-      selectizeInput('fr24_airline.code', 'Select airline', choices = NULL,
-                     multiple = TRUE),
-      
-      textInput('fr24_select_org', 'Origin airport code',NA),
-      textInput('fr24_select_dst', 'Destination airport code',NA),
-      textInput('fr24_select_reg_number', 
-                'Registration number (if multiple, separate with ";")',NA),
-      # textInput('fr24_select_ac_type', 
-      #           'Aircraft type (if multiple, separate with ";")',NA),
-      
-      selectizeInput('fr24_select_ac_type', 'Aircraft type', choices = NULL,
-                     multiple = TRUE),
-      
-      uiOutput('textaera_fr24'),
-      
-      # actionButton('go_fr24','Generate query') ,,
-
-      actionButton('go2_fr24','Query FR24') ,      
-      actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
-                   style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-      downloadButton('dl_fr24', 'Download data')
-    ),
-    
-    box( width = 8,
-         title = 'Raw data summary',
-         infoBoxOutput('fr24_info_nb_flight'),
-         infoBoxOutput('fr24_info_nb_tail'),
-         infoBoxOutput('fr24_info_nb_org'),
-         infoBoxOutput('fr24_info_nb_dst')
-    ),
-    
-    box( width = 8, 
-         title = 'Data quality check',
-         # uiOutput('fr24ui_freq_sel_col'),
-         selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
-         
-         plotlyOutput('fr24_freq_check_dt_quality'),
-         style = 'overflow-y: scroll; max-height: 700px'
-    ),
+    box(title = 'FlightRadar24 Data Loader', width = 12, solidHeader = TRUE,status = 'success',
+        fluidRow(
+          column(4,
+                 dateRangeInput('fr24_daterange', 'Select the range of date',
+                                start = '2015-9-14', end = '2015-9-20', startview = 'year'),
+                 # textInput('fr24_airline.code', 'Enter the Airline IATA code'),
+                 
+                 selectizeInput('fr24_airline.code', 'Select airline', choices = NULL,
+                                multiple = TRUE),
+                 
+                 textInput('fr24_select_org', 'Origin airport code',NA),
+                 textInput('fr24_select_dst', 'Destination airport code',NA),
+                 textInput('fr24_select_reg_number', 
+                           'Registration number (if multiple, separate with ";")',NA),
+                 # textInput('fr24_select_ac_type', 
+                 #           'Aircraft type (if multiple, separate with ";")',NA),
+                 
+                 selectizeInput('fr24_select_ac_type', 'Aircraft type', choices = NULL,
+                                multiple = TRUE),
+                 
+                 uiOutput('textaera_fr24'),
+                 
+                 # actionButton('go_fr24','Generate query') ,,
+                 br(),
+                 
+                 actionButton('go2_fr24','Query FR24') ,      
+                 actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
+                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+                 downloadButton('dl_fr24', 'Download data')
+          ),
+          column(8,
+                 fluidRow(
+                     box( width = 12,
+                        title = 'Raw data summary',
+                        infoBoxOutput('fr24_info_nb_flight'),
+                        infoBoxOutput('fr24_info_nb_tail'),
+                        infoBoxOutput('fr24_info_nb_org'),
+                        infoBoxOutput('fr24_info_nb_dst')
+                        )
+                 ),
+                 
+                 fluidRow(
+                     box( width = 12, 
+                        title = 'Data quality check',
+                        # uiOutput('fr24ui_freq_sel_col'),
+                        selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
+                        
+                        plotlyOutput('fr24_freq_check_dt_quality')
+                        # ,
+                        # style = 'overflow-y: scroll; max-height: 700px'
+                   )
+                 )
+          )
+        ) # end frow
+    ) # end box
+  ), # end frow
+  
+  
+  # fluidRow(
+  #   
+  #   # _query ####
+  #   box( width = 4,
+  #     title = 'FlightRadar24', status = 'warning', solidHeader = TRUE,
+  #     dateRangeInput('fr24_daterange', 'Select the range of date',
+  #                    start = '2015-9-14', end = '2015-9-20', startview = 'year'),
+  #     # textInput('fr24_airline.code', 'Enter the Airline IATA code'),
+  #     
+  #     selectizeInput('fr24_airline.code', 'Select airline', choices = NULL,
+  #                    multiple = TRUE),
+  #     
+  #     textInput('fr24_select_org', 'Origin airport code',NA),
+  #     textInput('fr24_select_dst', 'Destination airport code',NA),
+  #     textInput('fr24_select_reg_number', 
+  #               'Registration number (if multiple, separate with ";")',NA),
+  #     # textInput('fr24_select_ac_type', 
+  #     #           'Aircraft type (if multiple, separate with ";")',NA),
+  #     
+  #     selectizeInput('fr24_select_ac_type', 'Aircraft type', choices = NULL,
+  #                    multiple = TRUE),
+  #     
+  #     uiOutput('textaera_fr24'),
+  #     
+  #     # actionButton('go_fr24','Generate query') ,,
+  # 
+  #     actionButton('go2_fr24','Query FR24') ,      
+  #     actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
+  #                  style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+  #     downloadButton('dl_fr24', 'Download data')
+  #   ),
+  #   
+  #   box( width = 8,
+  #        title = 'Raw data summary',
+  #        infoBoxOutput('fr24_info_nb_flight'),
+  #        infoBoxOutput('fr24_info_nb_tail'),
+  #        infoBoxOutput('fr24_info_nb_org'),
+  #        infoBoxOutput('fr24_info_nb_dst')
+  #   ),
+  #   
+  #   box( width = 8, 
+  #        title = 'Data quality check',
+  #        # uiOutput('fr24ui_freq_sel_col'),
+  #        selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
+  #        
+  #        plotlyOutput('fr24_freq_check_dt_quality'),
+  #        style = 'overflow-y: scroll; max-height: 700px'
+  #   )
+  # ),
+  
+  fluidRow(
     
     # _data Cleaner ####
     box( width = 12, collapsible = TRUE, 
-      title = 'Data Cleaner',
-      uiOutput('fr24ui_select_reg_number2'),
-      uiOutput('fr24ui_select_flight_number2'),
-      uiOutput('fr24ui_select_org2'),
-      uiOutput('fr24ui_select_dst2')#,
-      # actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
-      #              style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+         title = 'Data Cleaner', status = 'primary',
+         uiOutput('fr24ui_select_reg_number2'),
+         uiOutput('fr24ui_select_flight_number2'),
+         uiOutput('fr24ui_select_org2'),
+         uiOutput('fr24ui_select_dst2')#,
+         # actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
+         #              style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
     )
   ),
   
   # *****TEST OUTPUT*****
   fluidRow(
     
-    box(title = 'FlightRadar24 raw data preview', width = 12,
+    box(title = 'FlightRadar24 raw data preview', width = 12,status = 'danger',
         dataTableOutput('test_fr24')),
-    box(title = 'FR24 with BIO AC_TYPE',width = 12,
+    box(title = 'FR24 with BIO AC_TYPE',width = 12, status = 'warning',
         p('if there is no information after [LANDING_TIME], this means that this aircraft is nolonger in service today. We do not have the current status in BIO database.'),
         div(dataTableOutput('text_fr24'),
             style = 'overflow-x: scroll')),
@@ -514,10 +650,22 @@ fluidrow_FR24_airline <- fluidPage(
         ),
         tabPanel(title = 'Network visualization',
                  visNetworkOutput('fr24_network_viz', height = 650, width = '100%')),
+        
         tabPanel(title = 'Analysis',
-                 verbatimTextOutput('network_fr24_analysis1'),
-                 verbatimTextOutput('network_fr24_analysis2'))
-            
+                 fluidRow(
+                   column(5,
+                     selectizeInput('fr24_nwpath_org', 'Select origin', 
+                                    choices = NULL),
+                     selectizeInput('fr24_nwpath_dst', 'Select destination', 
+                                    choices = NULL),
+                     
+                     verbatimTextOutput('network_fr24_analysis1')
+                   ),
+                   column(7,
+                     
+                     plotlyOutput('network_fr24_distancetable', height = '100%'))
+                   )
+                 )
     )
   )
 )
@@ -799,12 +947,7 @@ dashboardPage(
       ### tab1.1 data loader ----
       tabItem(
         tabName = 'cargois',
-        valueboxes,
-        #### row 1.1.1: input, top airports, top air routes
-        fluidRow(             
-          cargo.is.input,
-          cargo.is.preview
-        )
+        fluidpage.cargois.dataloader
       ),
       ###-----------------------
 
@@ -818,13 +961,13 @@ dashboardPage(
       
       tabItem(
         tabName = 'cargois_top',
-        fluidrow.top_apt_inputs 
+        fluidpage.top_apt_inputs
       ),
       
       #### row 1.3.1: cargo IS treemap ----
       tabItem(
         tabName = 'cargois_treemap',
-        fluidrow.Treemap
+        fluidpage.cargois.treemap
       ),
       
       ### tab 1.3 AWB analysis ----
@@ -864,7 +1007,7 @@ dashboardPage(
       tabItem(
         tabName = 'sea_trade', 
         ### row 2.1: Seabury treemap/evolution chart/table ----
-        fluidrow_Seabury 
+        fluidpage_Seabury 
       ),
       
       ## TAB 3: FR24 ----
@@ -920,6 +1063,166 @@ dashboardPage(
 )
 #=================================================================
   
+###### //////////OLD CODE/////////////////// ####
+# cargo.is.input <- box(width = 4,
+#                       title = 'Cargo IS query', status = 'warning', solidHeader = TRUE,
+#                       selectizeInput(
+#                         'level', 'Query level', choices = choice.level
+#                       ),
+#                       # selectizeInput(
+#                       #   'year', 'Year', choices = choice.year
+#                       # ),
+#                       uiOutput(
+#                         'year_cargois_ui'     ),
+#                       
+#                       # uiOutput(
+#                       #   'cargois_ui_org'
+#                       # ),
+#                       # uiOutput(
+#                       #   'cargois_ui_dst'
+#                       # ),
+#                       
+#                       selectizeInput('org', 'Origin', choices = NULL),
+# 
+#                       selectizeInput('dst', 'Destination', choices = NULL),
+#                       
+#                       # textInput('org','Origin'),
+#                       # textInput('dst','Destination'),
+#                       
+#                       checkboxInput('yld_evo', 'Plot evolution since 2010 (this could take several minutes)',
+#                                     FALSE),
+#                       # checkboxInput('min_max_avg', 'Show min/max/average',
+#                       #               FALSE),
+#                       actionButton('go2','Load data',
+#                                    style="color: #fff; background-color: #337ab7; border-color: #2e6da4") ,
+#                       downloadButton('dl_cargo_is', 'Download raw data')
+#                       
+#                       #htmlOutput("text2")
+# )
+# 
+# ## valueboxes: value Boxes #######
+# 
+# valueboxes = fluidRow(
+#                 valueBoxOutput('box.count_obs',width = 2),
+#                 valueBoxOutput('box.count_apt_pair',width = 2),
+#                 valueBoxOutput('box.count_ORG',width =2),
+#                 valueBoxOutput('box.count_DST',width = 2),
+#                 valueBoxOutput('box.avg_weight',width = 2),
+#                 valueBoxOutput('box.ave_yield',width = 2)
+#               )
+# 
+# ## cargo.is.preview: preview the table DATA #########
+# cargo.is.preview <-  box(width = 8, title = 'Preview of the first 50 rows',
+#                          div(dataTableOutput('table_preview'), style = 'overflow-x: scroll')
+#                      )
   
-  
+# fluidrow.top_apt_inputs <- fluidRow(
+#                     box(width = 4,                            
+#                     sliderInput('pt.size.top.apt','Select the point size',
+#                                min = 1, max = 100, value = 50),
+#                     sliderInput('nb.top','Enter the number of airport/air routes to display',
+#                               min = 1, max = 50, value = 20),
+#                     p('thickness = weight, color = yield')
+#                     ),
+#                                     
+#                     
+#                     tabBox(width = 8,
+#                                  tabPanel(title = 'Top Airport',
+#                                          # div(style="display:inline-block",
+#                                     #     sliderInput('pt.size.top.apt','Select the point size', 
+#                                     #                 min = 1, max = 100, value = 50)),
+#                                     # div(style="display:inline-block",
+#                                     #     sliderInput('nb.top','Enter the number of airport/air routes to display',
+#                                     #                 min = 1, max = 50, value = 20)),
+# 
+#                                     # sliderInput('pt.size.top.apt','Select the point size', 
+#                                     #             min = 1, max = 100, value = 50),
+#                                     # sliderInput('nb.top','Enter the number of airport/air routes to display',
+#                                     #             min = 1, max = 50, value = 20),
+# 
+#                                     plotlyOutput('top.airport')),
+#                                            
+#                                     tabPanel(title = 'Top air route (O&D)', plotlyOutput('top.air.route'))
+#                                     
+#                                 ),####
+#                     
+#                     tabBox(width = 12,
+#                            tabPanel(title = 'Airports data table', DT::dataTableOutput('topairport.table')),
+#                            tabPanel(title = 'Air routes data table', DT::dataTableOutput('topairroute.table'))
+#                            )
+# )
  
+# fluidrow.Treemap = fluidRow(
+#                     tabBox(
+#                       title = 'Origin Countries Treemap', 
+#                       # tabPanel('Plot',plotOutput('tree.org_cty')),
+#                       
+#                       tabPanel('Plot',
+#                                div(htmlOutput('tree.org_cty_gvis'), 
+#                                    style = 'overflow-x: scroll')),
+#                       
+#                       tabPanel('Table', dataTableOutput('tree.org_cty_dtable'))
+#                     ),
+#                     
+#                     tabBox(
+#                       title = 'Destination Countries Treemap', 
+#                       
+#                       tabPanel('Plot', 
+#                                div(htmlOutput('tree.dst_cty_gvis'), 
+#                                    style = 'overflow-x: scroll')),
+#                       
+#                       tabPanel('Table', dataTableOutput('tree.dst_cty_dtable'))
+#                     )
+#                   )
+
+# column(width = 3, 
+#     box(title = 'Parameters', 
+#         solidHeader = TRUE,
+#         status = 'warning',
+#         width = '100%',
+#         
+#         uiOutput('select_wb'),
+#         
+#         radioButtons('cargois_versus_plot_gyny','Choose the yield',
+#                     choices = list('Gross yield' = 'gy',
+#                                    'Net yield' = 'ny')),
+#         
+#         # radioButtons('cargois_versus_plot_avg_para', 'Choose the arithmetic',
+#         #              choices = list('Average yield' = 'normal',
+#         #                             'Weighted average yield' = 'weight')),
+#         
+#         textInput('cargois_width','Set the width of download file',30),
+#         
+#         textInput('cargois_height','Set the height of download file',15)
+#     )
+# ),
+# 
+# 
+# ## __versus plot ####
+# column(width = 9,
+#     tabBox(width = '100%', 
+#         tabPanel('Shipment freq evoluion', plotOutput('freq_shipment_evo'),
+#                 downloadButton('cargois_dl_freq_shipment_evo', 'download PNG')
+#                 ),
+# 
+#         tabPanel('Shipment weight distribution', plotOutput('dist_weight_awb'),
+#                 downloadButton('cargois_dl_dist_weight_awb', 'download PNG')
+#               ),
+# 
+#         tabPanel('Weight vs Distance',plotOutput('cargois_corr_plot'),
+#                 downloadButton('cargois_dl_weight_distance', 'download PNG')
+#                 ),
+#         tabPanel('Frequency vs Distance', plotOutput('cargois_freq_distance'),
+#                 downloadButton('cargois_dl_freq_distance', 'download PNG')
+#                 ),
+#         tabPanel('Revenue vs Distance', plotOutput('cargois_revenu_distance'),
+#                 downloadButton('cargois_dl_revenu_distance', 'download PNG')
+#                 ),
+#         tabPanel('Yield vs Distance', plotOutput('cargois_gy_distance'),
+#                 downloadButton('cargois_dl_gy_distance', 'download PNG')
+#         ),
+#         tabPanel('Average weight vs Distance', plotOutput('cargois_avgweight_distance'),
+#                 downloadButton('cargois_dl_avgweight_distance', 'download PNG')
+#         )
+#     )
+# )

@@ -9,8 +9,10 @@ library(shinydashboard)
 
 function(input, output, session) {
   
+  startTime <- Sys.time()
+  
   # ______CONSOLE________ ####
-  output$consol = renderUI({
+  output$consol <- renderUI({
     show = FALSE
     
     if(is.null(input$key_track)){
@@ -39,7 +41,8 @@ function(input, output, session) {
                        "<p>hostname: ", session$clientData$url_hostname, "</p>",
                        "<p>pathname: ", session$clientData$url_pathname, "</p>",
                        "<p>port: ",     session$clientData$url_port,     "</p>",
-                       "<p>search: ",   session$clientData$url_search,   "</p>"
+                       "<p>search: ",   session$clientData$url_search,   "</p>",
+                       "<p>Start time: ",   startTime,   "</p>"
                  )
 
                   ,'
@@ -225,7 +228,9 @@ function(input, output, session) {
   
   # AIRPORT LOCATION ####
   AIRPORT_LOCATION <- reactive({
-    get.airport.loc(detail = TRUE)
+    if(statu_bio == 'OK'){
+      get.airport.loc(detail = TRUE)
+    }
   })
   
   
@@ -463,7 +468,7 @@ function(input, output, session) {
     gvisLineChart(total_evolution, "Months", c("Gross.yield",
                                         "Net.yield",                                           
                                         "Weight"),
-                  options=list(height=600,legend = "bottom",
+                  options=list(height=600,legend = "bottom",width = '100%',
                                # chart="[
                                # title:'title'
                                # ]",
@@ -1491,32 +1496,35 @@ WHERE COMPLETION_STATUS=0\n"
   observeEvent(FR24_BIO_AC(),{
     updateSelectInput(session = session, inputId = 'fr24_freq_sel_col', 
                       choice = names(FR24_BIO_AC()))
+    
+    ## 6.2 make barplot####
+    observeEvent(input$fr24_freq_sel_col, {
+      output$fr24_freq_check_dt_quality <- renderPlotly({
+        if(!is.null(input$fr24_freq_sel_col)){
+          selected <- input$fr24_freq_sel_col
+          
+          data <- data.frame(FR24_BIO_AC())
+          
+          df <- data.frame(table(data[,selected]))
+          p <- plot_ly(df[order(df$Freq, decreasing = TRUE),],
+                       x = Var1,
+                       y = Freq,
+                       name = "Freq",
+                       type = "bar")%>% 
+            layout(title = paste('Distribution of ',input$fr24_freq_sel_col, sep = ''),
+                   scene = list(
+                     xaxis = list(title = "Variable"), 
+                     yaxis = list(title = "Frequency")
+                   ))
+        }
+        p
+      })
+    })
+    
   })
 
   
-  ## 6.2 make barplot####
-  observeEvent(FR24_BIO_AC(), {
-    output$fr24_freq_check_dt_quality <- renderPlotly({
-      if(!is.null(input$fr24_freq_sel_col)){
-        selected <- input$fr24_freq_sel_col
-        
-        data <- data.frame(FR24_BIO_AC())
-        
-        df <- data.frame(table(data[,selected]))
-        p <- plot_ly(df[order(df$Freq, decreasing = TRUE),],
-                     x = Var1,
-                     y = Freq,
-                     name = "Freq",
-                     type = "bar")%>% 
-          layout(title = paste('Distribution of ',input$fr24_freq_sel_col, sep = ''),
-                 scene = list(
-                   xaxis = list(title = "Variable"), 
-                   yaxis = list(title = "Frequency")
-                 ))
-      }
-      p
-    })
-  })
+
  
     # if(nrow(df)< 10){
     #   height = 500
@@ -1553,7 +1561,7 @@ WHERE COMPLETION_STATUS=0\n"
                   row.names = FALSE, col.names = TRUE)
     }
   )
-  # ****TEST OUTPUT**** ####
+  # ****Data review**** ####
   output$test_fr24 <- renderDataTable({
     FR24_datatable()
     # BIO_AC()
@@ -1589,15 +1597,17 @@ WHERE COMPLETION_STATUS=0\n"
   
   ## ___creat node__####
   FR24_NW_NODE <- reactive({
+    apt_region <- data.table(AIRPORT_LOCATION())[,c('IATA','name','region_name'), with = FALSE]
     airport <- data.table(label = c(FR24_BIO_AC()$ORG, FR24_BIO_AC()$DST))
+    
     freq <- airport[, .N ,by = label]
     freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
     
     nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
-                        
                         title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
     nodes
   })
+  
   ## ___creat edges__####
   FR24_NW_EDGE <- reactive({
     match <- data.table(FR24_NW_NODE()$id, FR24_NW_NODE()$label)
@@ -1605,7 +1615,6 @@ WHERE COMPLETION_STATUS=0\n"
     routes <- data.table(ORG = FR24_BIO_AC()$ORG, DST = FR24_BIO_AC()$DST)
     
     freq_routes <- routes[, .N ,by = list(ORG, DST)]
-    
     freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
     freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
     
@@ -1614,22 +1623,61 @@ WHERE COMPLETION_STATUS=0\n"
   })
   
   
-  ## ___analysis output__####
-  output$network_fr24_analysis1 <- renderPrint({
-    routes <- as.matrix(data.table(ORG = FR24_BIO_AC()$ORG, DST = FR24_BIO_AC()$DST))
+  # Create igraph object ####
+  FR24_NW_igraph <- reactive({
+    routes <- as.matrix(data.table(ORG = FR24_BIO_AC()$ORG, 
+                                   DST = FR24_BIO_AC()$DST))
+    mtx <- get.adjacency(graph_from_edgelist(as.matrix(routes), 
+                                             directed = TRUE))
+    net <- graph.adjacency(mtx, mode="directed",diag=FALSE) #,weighted=TRUE
     
-    mtx <- get.adjacency(graph_from_edgelist(as.matrix(routes), directed = TRUE))
-    
-    net <- graph.adjacency(mtx,mode="directed",weighted=TRUE,diag=FALSE)
-    
-    betweenness(net)
-    
-    output$network_fr24_analysis2 <- renderPrint({
-      distances(net)
-    })
-    
+    net
   })
   
+  observeEvent(FR24_NW_NODE(),
+    {
+      updateSelectizeInput(session = session, inputId = 'fr24_nwpath_org',
+                           choices = levels(FR24_NW_NODE()$label),
+                           selected = levels(FR24_NW_NODE()$label)[1],
+                           server = TRUE)
+      
+      updateSelectizeInput(session = session, inputId = 'fr24_nwpath_dst',
+                           choices = levels(FR24_NW_NODE()$label), 
+                           selected = levels(FR24_NW_NODE()$label)[1],
+                           server = TRUE)
+    }
+  )
+
+  ## ___analysis output__####
+  output$network_fr24_analysis1 <- renderPrint({
+    
+    if((input$fr24_nwpath_org) == ""){
+      print('Please select the origin')
+    }else{
+      shortest_paths(FR24_NW_igraph(), input$fr24_nwpath_org, input$fr24_nwpath_dst)$vpath
+    }
+  })
+  
+  
+  output$network_fr24_distancetable <- renderPlotly({
+    dt <- distances(FR24_NW_igraph(), mode = 'out', algorithm = 'dijkstra')
+    
+    dt[is.infinite(dt)]=  max(dt[!is.infinite(dt)])+2
+    
+    vals <- unique(scales::rescale(c(dt)))
+    o <- order(vals, decreasing = FALSE)
+    cols <- scales::col_numeric("Blues", domain = NULL)(vals)
+    colz <- setNames(data.frame(vals[o], rev(cols[o])), NULL)
+    
+    a <- list(title = '')
+    
+    plot_ly(z = dt , type = "heatmap", x = rownames(dt), y = colnames(dt),
+            colorscale = colz) %>%
+      layout(xaxis = a, yaxis = a) #, autosize = F, width = 700, height = 600
+  })
+  
+  
+  ## render visNetwork Graph  ####
   output$fr24_network_viz <- renderVisNetwork({
     nodes <- FR24_NW_NODE()
     edges <- FR24_NW_EDGE()

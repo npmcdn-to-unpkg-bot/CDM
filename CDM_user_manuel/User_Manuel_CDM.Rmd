@@ -510,7 +510,7 @@ To create these charts, the package `ggplot2` is extensively used.
 
 ### Yield Calculator
 
-The last subtab of Cargo IS is a marketing tool called yield calculator, which offers an automatic computing for air route cargo yield. It will read air routes from a `csv` file, query *Cargo IS* database and display a data table with weight and yield information, as weel as a air route map visualizing all the air routes by their cargo weight and cargo yield.
+The last subtab of Cargo IS is a marketing tool called yield calculator, which offers an automatic computing for air route cargo yield. It will read air routes from a `csv` file (uploaded by user), query *Cargo IS* database and display a data table with weight and yields of every air route in the uploaded list, as well as a air route map visualizing all the air routes by their cargo weight and cargo yield.
 
 #### Instruction
 
@@ -518,7 +518,9 @@ The idea of yield calculator is to get rid of manual cargo yield computing. To u
 
 A data table will be displayed after the computing. The gross yield, net yield, weight, gross charges and net charges will be calculated for each air route. On the bottom, an air routes map will show the input air routes by the cargo weight and cargo yield. The darker the curve, the higher the yield. The thicker the curve, the higher the cargo weight. Click on "Download" to download the data table. It will be a `csv` file as well. 
 
-On the left, you can choose the map projection, the comparing criteria and some graphical parameters to customize the map.
+There may be rows only containing value **zero** in the output table. It is because of the lack of data in Cargo IS database. We do not have any information about the given air route.
+
+On the left of the map, there are some display parameters. You can select the appropriate map projection, the comparing criteria and some graphical parameters to customize the map.
 
 \begin{figure}[!h]
   \centering
@@ -528,7 +530,7 @@ On the left, you can choose the map projection, the comparing criteria and some 
 
 #### Explaination
 
-Figure 13 show the data manipulation procedure. Two input are used. The first one is the uploaded `csv` file and the second one is the Cargo IS data of the selected year (queried by `CargoIS.SQL.query()`). The function `grs_net_yield()` calls the package `data.table` and computes cargo yield for every air route of this data. The yield table will be merged with the uploaded air route list. After merging, the data table will be displayed on the top right of the page and the function `Plot.air.route.html()` will be call to further generate a map.
+Figure 13 show the data manipulation procedure. Two input are used. The first one is the uploaded `csv` file and the second one is the Cargo IS data of the selected year (queried by `CargoIS.SQL.query()`). The function `grs_net_yield2()` calls the package `data.table` and computes cargo yield for every air route of this data table. The yield table will be left joined to the uploaded air route list. After merging, the data table will be displayed on the top right of the page and the function `Plot.air.route.html()` will be call to further generate a map.
 
 \begin{figure}[!h]
   \centering
@@ -537,19 +539,108 @@ Figure 13 show the data manipulation procedure. Two input are used. The first on
 \end{figure}
 
 
+
+<!-- _________Seabury database__________ -->
 ## Seabury Database
 
 The second part of this document consists analysis and visualizations of **Seabury Trade** database. Seabury Trade contains annual country level cargo weight and value information. It has not only the airfeight weight and value, but also for the other surface transportation. It provide an in-depth level of commodity type which could allow us to get some knowledge about the cargo type of the market.
 
-Beside Seabury trade, there two other databases which could be useful for market knowledge. They are Seabury Express and Seabury.
+Beside Seabury trade, there two other databases which could be useful for market knowledge. They are Seabury Express and Seabury. They could be very useful for the further development of the application.
 
 Seabury databases are stored in the same data server as Cargo IS. 
 
-### Seabury Trade 
+### Data loader
+
+#### Instruction
+
+As for Cargo IS query, the first step here also consists of data loading. You must select firstly the data granularity to be queried. Then, the year parameter should be set as well. Seabury Trade database contains annual data from 2000. Then the drop menus of *Origin* and *Destination* will change automatically according to your selection of data granularity. When all the input parameters are set, click on the **Run** button to start to query the database.
+
+#### Explaination
+
+The start button trigers the user-defined function `Seabury.SQL.OD.query()`. It works just like `CargoIS.SQL.query()`: it will generate a SQL query that depends on the user input. Then it send the generated query to our SQL server and fetch the returned data.
+
+```{r eval=FALSE, echo=TRUE}
+# Example
+#' ODBC: a Oracle SQL connector,
+#' level: granularity of queried data
+#' ORG: Origin
+#' DST: destination
+#' Year: interger of NA, if NA, query all the data, otherwise query the selected year
+#' country.name: if TRUE, return the full country name
+Seabury.SQL.OD.query(ODBC, level, ORG, DST, year = NA, country.name = FALSE)
+```
+
+
+### Commodity treemap
+
+Seabury Trade database contains a detailed commodity categorization system. It has eight main categories and more than 2000 sub-categories. 
+
+#### Instruction
+
+Seabury Trade has more than 70 000 000 rows so the data loading process may take longer time than Cargo IS. When data is loaded, **CDM** will generate a treemap to present the commodity types, their weight (in kg) and their value (in USD). The size of the square corresponds to the cargo weight for this type of goods. Its color represent the value. The data table could be view in the *Table* tab, and you could download it by clicking on the button *Download*. The structure of the data table is the same as the airport treemap in Cargo IS.
+
+You can click on the square to look further into the sub-categories of the selected commodity type. There are four different levels of categories, G1, G2, G3 and G4. The bigger the number, the higher the complexity. G1 level contains eight different categories but there are around 2000 in the G4 level.
+
+You could change to look at the ocean freight information by simply selecting the freight type from the dropdown menu. The data table is also downloadable by clicking **Download** button.
+
+#### Explaination
+
+To draw the treemap, a user-defined function `treemap_dt_sea_gvis()` is firstly called to generate a data table that fits the requests of `googleVis::gvisTreeMap()`. Then the treemap is generated with a user-defined function `treemap_sea_gvis()`, which will call `googleVis::gvisTreeMap()`. 
+
+```{r eval=FALSE, echo=TRUE}
+# Function to generate data table for treemap of SEABURY GXCODE
+#' data: an output datatable of Seabury.SQL.OD.query()
+#' if AIR = TRUE then output airfreight value
+#' otherwise, output surface freight value
+treemap_dt_sea_gvis(data, AIR = TRUE)
+
+#' Function to draw the treemap of SEABURY GXCODE
+#' data: Output of treemap_dt_sea_gvis()
+#' ORG, DST, YEAR: parameter of the title of the treemap
+treemap_sea_gvis(data, ORG, DST, YEAR)
+
+```
+
+
+### Evolution plot
+
+#### Instruction
+The second major functionality of Seabury Trade tab is the cargo weight evolution plot. By selecting the name of commodity type, you can thus create a line chart that represents the evolution of airfreight weight since 2000. If the box "Plot all level" is checked, then all the data base will be loaded and visualized (This could take a very long time).
+
+There are four sub-tabs (G1LEVEL, G2LEVEL, G3LEVEL and G4LEVEL) representing the four different catogiries. The evolution of the sub-categories (if exist) of the selected type will be plotted following sub-tab. You can change the y-axis from cargo weight to cargo value.
+
+<!-- TODO: download datatable -->
+The data table will be displayed in the last sub-tab.
+
+**Attention**: If you selected, for example, a G3 level category, then please go the the third sub-tab to get the correct line chart. The charts in the superior levels will be the same as the third tab, but the commodity name will be wrong. To know the level of category that you selected, you can count the number of "-" before the name of category.
+
+#### Explaination
 
 
 
+<!-- ____________FlightRadar 24___________ -->
 ## FlightRadar 24 Database
+
+**FlighRadar 24** is a renctly purchased database at Airbus. It provides flight tracks, origins and destinations, flight numbers, registration numbers, flight positions (coordinates), altitude, heading and speed for 2014 and 2015. The data of FR24 mainly comes from the third party ADS-B (Automatic dependent surveillance-broadcast) receivers all over the world. The receivers collect data from any aircraft in their local aera that are equipped with an ADS-B transponder and upload to the internet in the real time. 
+
+FR24 could be very valuable for Airbus freighter because it may fill the gap of the lack of express cargo airlines' data. With FR24, we could extract the schedule of these airlines, which we did not have any information before.
+
+But, comparing with other databases, it has some particularities. 
+
+* We have two stock location for this database. The first one is the **MySQL** server inside airbus (which is used by **CDM**). The second one is the cloud-based platform **Foundry**. 
+* The data size is way larger than the other databases. Because it records the real-time position of aircraft, so we have about 1-2 Gb of data per day. 
+<!-- ask aur?lien -->
+* The data quality of FR24 is a major challenge for analysis. For example in the column "Aircraft Type", we have several different codes representing the same aircraft (*e.g.* both B77F, B77L, 77L and 77F represent Boeing 777 freighter)
+
+
+### Data loader
+
+#### Instruction
+
+#### Explaination
+
+### Airline network
+
 
 ## Other features
 
@@ -571,7 +662,9 @@ Each time when a new session of **CDM** starts, it will try to make a connection
 
 ```{r eval=FALSE, echo=TRUE}
 
-CargoDB <- try(dbConnect(drv, username = username_cargois, password = password_cargois, dbname = connect_string_cargois))
+CargoDB <- try(dbConnect(drv, username = username_cargois, 
+                         password = password_cargois, 
+                         dbname = connect_string_cargois))
 
 ```
 

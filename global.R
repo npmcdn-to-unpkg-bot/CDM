@@ -78,8 +78,17 @@ CargoDB <- CargoDBcon()
 
 if(class(CargoDB) == 'try-error'){
   statu_cargois <- 'Failed'
-  choice.year <- 'ERROR'
+  
+  choice.year <- 'ERROR: Connection to Cargo IS failed'
   choice_year_sea <- 'ERROR'
+  choice_gx_code <- 'ERROR'
+  choice.city <- 'ERROR: Connection to Cargo IS failed'
+  choice.region.cargois <- 'ERROR: Connection to Cargo IS failed'
+  choice.country <- 'ERROR: Connection to Cargo IS failed'
+  choice.airport <- 'ERROR: Connection to Cargo IS failed'
+  
+  choice.region.seabury <- 'ERROR'
+  choice.sea.country <- 'ERROR'
 }else{
   statu_cargois <- 'OK'
   source('Rscripts/CargoIS.SQL.query.R')
@@ -91,6 +100,7 @@ if(class(CargoDB) == 'try-error'){
   source('Rscripts/Seabury.SQL.evo.query.R')
   source('Rscripts/Seabury.SQL.get.code_name.R')
   choice_gx_code <- Seabury.SQL.get.code(CargoDB)
+  
   source('Rscripts/Seabury.SQL.OD.query.R')
   source('Rscripts/Seabury.get.year.R')
   source('Rscripts/Yield_Cargo_evolution.R')
@@ -130,6 +140,7 @@ if(class(BIO) == 'RODBC'){
   choice.bio.airport <- get.airline.code()
 }else{
   statu_bio <- 'Failed'
+  choice.bio.airport <- 'ERROR: Connection to BIO failed'
 }
 
 library(RMySQL)
@@ -147,6 +158,7 @@ FR24 <- FR24con()
 
 if(class(FR24) == 'try-error'){
   statu_fr24 <- 'Failed'
+  choice.ACtype.fr24 <- 'ERROR: Connection to FlightRadar24 failed'
 }else{
   statu_fr24 <- 'OK'
   source('Rscripts/Connecxion MySQL.R')
@@ -332,6 +344,9 @@ ShipmentEvo = function(data){
 }
 
 # Function to create treemap for SEABURY GXCODE
+#' data: an output datatable of Seabury.SQL.OD.query()
+#' if AIR = TRUE then output airfreight value
+#' otherwise, output surface freight value
 treemap_dt_sea_gvis <- function(data, AIR = TRUE){
   data[is.na(data)] <- 0
   if(AIR){
@@ -389,7 +404,7 @@ treemap_sea_gvis <- function(data, ORG, DST, YEAR){
   title <- paste('Treemap of commodity types from ',ORG,' to ',DST,' ', YEAR, sep = '')
   gvisTreeMap(data = data, idvar = 'NAME', parentvar = 'PARENT', sizevar = 'WEIGHT',
               colorvar = 'logVALUEPERKILO',
-              options=list(width=950, height=550,
+              options=list(width='100%', height=670,
                            fontSize=16,
                            minColor='#F5B041',
                            midColor='#F0F3F4',

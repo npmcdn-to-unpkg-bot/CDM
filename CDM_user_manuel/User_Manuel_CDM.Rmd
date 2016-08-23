@@ -4,6 +4,7 @@ author: "Xuzhou Qin"
 date: "10 August 2016"
 output:
   pdf_document:
+    
     fig_caption: yes
     includes:
       in_header: tex/header.tex
@@ -71,7 +72,7 @@ knitr::opts_chunk$set(echo = TRUE)
 &nbsp;
 
 \subsection*{Abstract}
-This is the user guide of *Cargo Data Miner*. *Cargo Data Miner* is an R-Shiny Dashboard application developed by Airbus Freighter Marketing department (CSMX). The initiative is to build a platform where everybody could query and analyze cargo data. In this document, detailed information and instruction are provided in order to facilitate the usage and maintenance of the application. For more information, the author could be reached at <xuzhou.qin@gmail.com>.
+This is the user guide of *Cargo Data Miner*. *Cargo Data Miner* is an R-Shiny Dashboard application developed by the Airbus Freighter Marketing department (CSMX). The initiative is to build a platform where everybody could query and analyze cargo data. In this document, detailed information and instruction are provided in order to facilitate the usage and maintenance of the application. For more information, the author could be reached at <xuzhou.qin@gmail.com>.
 
 \subsection*{Acknowledgement}
 The present work benefited from Oliver Von-Tronchin, tutor of my internship and director of Freighter Marketing (CSMX), Sebastian Aponte, Nicolas Chauviere-Courcol, colleagues of mine in CSMX, Federico Semeraro and Andy Williams, for their inspiration of the project *LiMA*, Pierre Binet, Didier Gauzy, Aurelien Turina, Sam Crawshay Jones, Lionel Cousseins, Yves Renard and all my colleagues of Airbus who provided valuable comments and ideas to the undertaking of the project here.
@@ -80,52 +81,52 @@ The present work benefited from Oliver Von-Tronchin, tutor of my internship and 
 
 \newpage
 # Introduction
-Aviation market is a highly complex and data-dependent market. Inside Airbus, numbers of different servers are deployed to stock, manage and provide database services to support our daily work. It is striving to introduce data digitalization as a core task of its future plan. The raising importance of data has already grabbed the attention of the managers and it will never stop growing. However, face to the massive amount of data, challenge still remains. 
+Aviation market is a highly complex and data-dependent market. Inside Airbus, numbers of different servers are deployed to stock, manage and provide database services to support our daily work. It is striving to introduce data digitalization as a core task in the future. The raising importance of data has already grabbed the attention of the managers and will never stop growing. However, the massive scale of data brings more challenges than solutions.
 
-At the company level, the main challenge comes from the database management. Too many databases are stocked seperately with different **database management system** (DBMS). The databases are quite isolated from the others. In other words, except people who frequently use one database, others could not even know its existence. Then, the different DBMS cause inconvinience in database management. For example in the freighter marketing department (CSMX), three marketing databases, *Cargo IS*, *Seabury* and *FlightRadar 24* are stocked separately in three data servers using three different DBMS (Oracle Database, MySQL and Microsoft SQL server). 
+At the company level, the main challenge comes from database management. Too many databases are stocked seperately with different **database management systems** (DBMS). The databases are quite isolated from one another. In other words, except the people who frequently use one database, others would not even know its existence. Therefore the different DBMSs cause inconvinience in database management. For example in the freighter marketing department (CSMX), three marketing databases, *Cargo IS*, *Seabury* and *FlightRadar 24* are stocked separately in three data servers using three different DBMSs (Oracle Database, MySQL and Microsoft SQL server). 
 
-At the department level, the major challenge is the lack of an efficient and user-friendly tool for the data extraction and analysis process. Even thought the traditional approach of database management, SQL, is widely used for data manipulation. But in order to use it efficiently, you must have some knowledge of programming and you have to suffer the difficulty in interfacing. As SQL is not a common tool inside marketing department, interacting with the data by using SQL may not be a suitable choice. As to the data analysis tool, Excel is one of the most widly used software. But it suffers from some innate limitations facing the increasing amount of data.
+At the department level, the major challenge is the lack of an efficient and user-friendly tool for the data extraction and analysis process. Even though the traditional approach of database management, SQL, is widely used for data manipulation. In order to use it efficiently, you must have some knowledge of programming and you have to cope with the difficulty in interfacing. As SQL is not a common tool inside marketing department, interacting with the data by using SQL may not be a suitable choice. As to the data analysis tool, Excel is one of the most widly used software. But it suffers from some innate limitations facing the increasing amount of data.
 
-There are also some Airbus-made tools for marketing department, like *Acper*, *OAG Builder*, *route06*, etc. These are very powerful and sophisticated programs dedicated for specific usage since a very long time. They are irreplaceable for some tasks but they are still not perfect. For example, in terms of learning difficulty, they both have a steep learning curve. Some special training session are needed to master these tools. And from a graphical design's point of view, they often remind me about the "old fashioned" software interface, which may be not enough intuitive and user-friendly. The need to visualize the analytic results in a modern way is thus urgent.
+There are also some Airbus-made tools for the marketing departments, like *Acper*, *OAG Builder*, *route06*, etc. These are very powerful and sophisticated programs dedicated for specific usage thats existed for a very long time. They are irreplaceable for some tasks but they are not perfect. For example, they both have a steep learning curve. Some special training session are required to master these tools. From a graphical design's point of view, they often remind me of the "old fashioned" software interface, which may be not intuitive and user-friendly. It is essential to visualize the analytic results in a modern way.
 
-Due to these facts, data digitalization inside Airbus could be done from two level. We will need an uniform and standardized platform to stock and manage data at the company level. And inside the departments, new data mining and analysis tools are needed to support the works in the big data era. Some moves have already been realized inside Airbus. **BIO** is a platform which provide an automatic aggregation of different databases. **Foundry** is a cloud-based platform for collaboratively big data analysis built by Palantir Technologies.
+Due to these existing shortcomings, data digitalization inside Airbus could be done from two levelshould target two aspects. We will need an uniform and standardized platform to stock and manage data at the company level; and inside the departments, new data mining and analysis tools are needed to support the work in the big data era. Some projects have already been moving toward that direction inside Airbus. **BIO** is a platform which provides an automatic aggregation of different databases. **Foundry** is a cloud-based platform for collaborative big data analysis built by Palantir Technologies.
 
-This document provide a feasible solution for the development of a data analysis tool by using **R Shiny Dashboard**. **Shiny Dashboard** is a framework to create a light weight, powerful and interactive web application. It uses a reactive programming model so that outputs change instantly as users modify inputs. It is easy to use, no web designing language required. But further customization could be easily done with some HTML, CSS and JavaScript knowledge. 
+This document provides a feasible solution for the development of a data analysis tool by using **R Shiny Dashboard**. **R Shiny Dashboard** is a framework to create a light weight, powerful and interactive web application. It uses a reactive programming model so that outputs change instantly as users modify inputs. It is easy to use and no web designing language required. Further customization could be easily done with some HTML, CSS and JavaScript knowledge. 
 
-In the first section of this document, I will explain the reason for which **CDM** was born. After that, the installation and deployment prerequisites are presented. Then, detailed functionalities and the application structure, as well as the data structure, are stated in section two in order to provide technical support for using and maintenance. In the third section, some suggestions for the future development of this application are proposed. The technical appendix could be found in the last section of the document.
+In the first section, I will explain the reason for which **CDM** was born. After that, the installation and deployment prerequisites are presented. In section four, detailed functionalities and the application structure, as well as the data structure, are stated in order to provide technical support for using and maintenance. In the fifth section, some suggestions for the future development of this application are proposed. The technical appendix could be found in the last section of the document.
 
 
 <!-- # Prerequisites -->
 
 # Why R shiny Dashboard?
 
-At the beginning of my internship, I have been asked to explore different cargo databases. Because of my statistical profile, I was using R to analyze and visualize these data. Lots of codes were written at that moment, as well as numbers of power-point slides. But my tutor and I realized that coding in R could not be a permanent solution for the needs of Freight Marketing (CSMX) team. Because the R is not a common tool inside marketing department and it is not that easy to learn for people with little programming knowledge.
+At the beginning of my internship, I have been asked to explore different cargo databases. Because of my statistical background, I was using R to analyze and visualize these data. Lots of codes were written at that moment, as well as numbers of power-point slides. But my tutor and I realized that coding in R could not be a permanent solution for the needs of Freight Marketing (CSMX) team, because R is not a common tool inside marketing department and it is not that easy to learn for people with little programming knowledge.
 
-I started looking for a good way to make a reusable, easy-to-access but powerful data analytic tool. I learnt a lot about R at school so my first intention is to keep using R as the programming language. Furthermore, the numbers of R users at Airbus is increating steadly. It could be a big advantage for the further development of the code. 
+I started looking for a better way to make a reusable, easy-to-access yet powerful data analytic tool. I learnt a lot about R at school so my first intention is to keep using R as the programming language. Furthermore, the number of R users at Airbus is increating steadly. It could be a big advantage for the further development of the code. 
 
-Shiny by Rstudio is a great tool that will fit our needs. Shiny offers the *reactive programming* framework that will fit perfectly our needs of a reusable tool. It allow us to produce different analysis from different inputs, without modifying the code. Meanwhile, the abundant R packages could make the life much better by dramatically reducing the programming work.
+Shiny by Rstudio is a great tool that fits our needs. Shiny offers the *reactive programming* framework that perfectly matches the need of a reusable tool. It allows us to produce different analysis from different inputs, without modifying the code. Meanwhile, the abundant R packages could make life much easier by dramatically reducing the programming workload.
 
-What else? By using Shiny Dashboard, it is easy to integrate different shiny applications into a one-page web application. So that we will have one complex dashboard based on [**Bootstrap 3**](https://github.com/twbs/bootstrap) framework. It is intuitive, efficient and polyvalent.
+Moreover, by using Shiny Dashboard, it is easy to integrate different shiny applications into a one-page web application. So that we will have one complex dashboard based on the [**Bootstrap 3**](https://github.com/twbs/bootstrap) framework. It is intuitive, efficient and multifunctional
 
-It has been four months since I started to develop **CDM**. Now the basic framework is almost done. In ther future, I wish that it could be helpful to make our work more efficient.
+It has been four months since I started to develop **CDM**. Now the basic framework is almost done. In the future, I hope it could help us work more efficiently.
 
 
 # Deployment guide
 
-**Cargo Data Miner** (CDM) was developed with [**Microsoft R Open 3.2.5**](https://mran.revolutionanalytics.com/), which is a enhanced distribution of R. It support by default multi-thread computing and it is perfectly compatible with the [original **R**](https://www.r-project.org/). The user interface used during the development is [**RStudio**](https://www.rstudio.com/), which the the most common IDE of R.
+**Cargo Data Miner** (CDM) was developed with [**Microsoft R Open 3.2.5**](https://mran.revolutionanalytics.com/), which is an enhanced distribution of R. It supports by default multi-thread computing and it is perfectly compatible with the [original **R**](https://www.r-project.org/). The user interface used during the development is [**RStudio**](https://www.rstudio.com/), which the the most common IDE of R.
 
 To make **CMD** work properly, there are two main methods.
 
 > -- Install and run it locally on a PC for personal use.
 
-> -- Deploy it on a Shiny server so that CDM could be reached by an IP adress.
+> -- Deploy it on a Shiny server so that CDM could be reached by an IP address.
 
-In this section, I will present both the two methods.
+In this section, I will present both of the methods.
 
 
 ## Directory Structure
 
-The following figure presents the structure of the CDM directory.
+The following figure shows the structure of the CDM directory.
 
 \begin{figure}[!h]
   \centering
@@ -145,25 +146,25 @@ The main directory `~/CDM` contains Shiny Dashboard scripts (*ui.R*, *server.R* 
 
 All the images, HTML, CSS and JavaScript used in **CDM** should be placed in `~/CDM/www`. All the R scripts called by the application should be placed in `~/CDM/Rscripts` and all the R packages (for local installation) should be placed in `~/CDM/Rpackages`.These three directories are the essential parts of **CDM**.
 
-In `~/CDM/CDM_user_manuel`, you will find the code of this use guide (written in R markdown) and its resources. All figures appeared in this document should be placed in `~/CDM/CDM_user_manuel/img` and all the LaTex scripts called from the R markdown code will be found in `~/CDM/CDM_user_manuel/tex`.
+In `~/CDM/CDM_user_manuel`, you will find the code of this use guide (written in R markdown) and its resources. All the images that appear in this document should be placed in `~/CDM/CDM_user_manuel/img` and all the LaTex scripts called by R markdown should be put in `~/CDM/CDM_user_manuel/tex`.
 
 
 ## Installation on a PC
 
-**CDM** could run on a personal computer having installed R and a web browser with the correct configuration. Before the first use, some steps have to be followed.
+**CDM** could run on a personal computer with an installed R and a web browser with the correct configuration. Before the first launch, some steps have to be followed.
 
 * Step 1: Get R and other required software:
-    + Install [**Microsoft R Open 3.2.5** from https://mran.revolutionanalytics.com/download/](https://mran.revolutionanalytics.com/download/) (to turn on the multi-thread computing support, install the MLK package as well), or you can install the [original **R** (64-bit) from https://cran.r-project.org/mirrors.html](https://cran.r-project.org/mirrors.html).
+    + Install [**Microsoft R Open 3.2.5** from https://mran.revolutionanalytics.com/download/](https://mran.revolutionanalytics.com/download/) (to active the multi-thread computing support, the `MLK` package shoud be installed as well), or you can install the [original **R** (64-bit) from https://cran.r-project.org/mirrors.html](https://cran.r-project.org/mirrors.html) to maximize the reliability.
     
     + Install [**RStuido** from https://www.rstudio.com/products/rstudio/](https://www.rstudio.com/products/rstudio/). This is optional but \underline{highly recommended}. 
     
     + **CDM** works with Internet Explorer but you could also install [Google Chrome](https://www.google.fr/chrome/browser/desktop/) for the best performance.
     
-    + Install **Oracle Database Instant Client (11.2.0.3) EN_W764** from PC service. Or you can download it from Oracle website (Make sure it is the 64-bit version). If error of Oracle occurs during the execution of **CMD**, see Appendix: Troubleshooting for help.
+    + Install **Oracle Database Instant Client (11.2.0.3) EN_W764** from PC service. Or you can download it from the Oracle website (Make sure that the downloaded software is the 64-bit version). If you get errors about Oracle client during the execution of **CMD**, see Appendix: Troubleshooting for help.
     
 * Step 2: Connection Setup
 
-    + **CMD** will need the access right of three different databases. They are: **p595dodmp01** (Cargo IS, Seabury), **fr0-bio-p01** (BIO) and **fr0-dmds-p01** (FlightRadar 24). The user name and password are already pre-filled and there is no need to change, except for **BIO** database. Because you will need to grant the access right to your own *Windows* account to make the connection. To do so, you could ask *Aurelien Turina* (<aurelien.turina@airbus.com>) or *Pierre Binet* (<pierre.binet@airbus.com>) for further information.
+    + **CMD** needs the access right of three different databases, which are: **p595dodmp01** (Cargo IS, Seabury), **fr0-bio-p01** (BIO) and **fr0-dmds-p01** (FlightRadar 24). User names and passwords are already pre-filled and there is no need to change. Except for **BIO** database, you will need to grant the access right to your own *Windows* account to establish the connection. To do so, you could ask *Aurelien Turina* (<aurelien.turina@airbus.com>) or *Pierre Binet* (<pierre.binet@airbus.com>) for further information.
 
     + `~/CDM/server.R` contains the connection parameters of these databases.  
 
@@ -202,11 +203,11 @@ host_fr24 <- "fr0-dmds-p01"
 
 * Step 3: Now you can open RStudio.
     
-    + Before running **CDM**, if you have more than one version of R installed on your computer, make sure that the R version is `[64-bit] ~/MRO_3.2.5` (the name could be varied)
+    + Before running **CDM**, if you have installed more than one version of R on your computer, make sure that the R version is `[64-bit] ~/MRO_3.2.5` (the name could be varied)
 
-    + Click on the **run** button on the top right of the text editor aera to execute the application. The application will automatically check if all the required R packages are installed and it will install those which are not installed from [**CRAN** (Comprehensive R Archive Network)](https://cran.r-project.org/). **CRAN** is a network of ftp and web servers around the world that store identical, up-to-date, versions of code and documentation for R. However, due to the internet connection configuration inside Airbus, if any of the required packages fails to download, you will have to download and install it manuelly (See Appendix for detail).
+    + Click on the **run** button on the top right of the text editor aera to execute the application. **CDM** will automatically check the required R packages and it will install from [**CRAN** (Comprehensive R Archive Network)](https://cran.r-project.org/) those which are missing on your computer . **CRAN** is a network of ftp and web servers around the world that store identical, up-to-date, versions of code and documentation for R. However, due to the internet connection configuration inside Airbus, if the installation of the required packages fails, you will have to download and install it manually (See Appendix for instruction).
     
-Now you are ready to use **CDM** :)
+When the interface shows in your web browser and the progress indicator disappears, you are finally ready to go :)
     
 ## Deployment on a Shiny Server Pro
 
@@ -253,33 +254,24 @@ Five different tabs are displayed on the sidebar. Each tab contains also several
 
 ## Cargo IS Database
 
-[**Cargo IS**](http://www.iata.org/services/statistics/intelligence/cargois/Pages/index.aspx) database is the first major component of **CDM**. It provides airport level Air Waybill data, including airfreight charges, weight, numbers of shipments and it is the only resource of cargo yield information for Airbus. 
+[**Cargo IS**](http://www.iata.org/services/statistics/intelligence/cargois/Pages/index.aspx) database is the first major component of **CDM**. The database is stored on the server **p595dodmp01**, under the user folder **A269_CARGOIS**. The main data table is `CARGOIS_MONTHLYDATA`, which contains 33 columns. But only few of them contain usable information for analysis.
 
-The database is stored on the server **p595dodmp01**, under the user folder **A269_CARGOIS**. The main data table is `CARGOIS_MONTHLYDATA`, which contains 33 columns. But only few of them contain usable information for analysis. `r paste(strsplit("WEIGHT_BREAK
-ORIGIN_AIRPORT_CODE
-DESTINATION_AIRPORT_CODE
-SALES_YEAR
-DESTINATION_CITY_CODE
-ORIGIN_CITY_CODE
-SALES_MONTH
-ORIGIN_COUNTRY_CODE
-WEIGHT_CHARGES_CURR_YEAR_USD
-OTHER_CHARGES_CURR_YEAR_USD
-WEIGHT_CURRENT_YEAR
-AWB_COUNT_CURRENT_YEAR
-GREATCIRCLEDISTANCE_KM", "\n")[[1]], sep = ", ")`
+Cargo IS database provides monthly Air Waybill data in the airport level, It contains airfreight charges, cargo weight and number of shipments (grouped by different weight breaks). Furthermore, it is the only resource of cargo yield information for Airbus. 
 
-**Important**: The database that we purchased does not contain any airline information. But a column called `AIRLINE_PREFIX` presents in the data table. It may be possible to negotiate with IATA to get the airline information in the future.
+**Remark**: 
+  
+  * The database that we purchased does not contain any airline information. However we could find a column called `AIRLINE_PREFIX` in the data table. It means that IATA do have airline information but it would not like to share. It may be possible to negotiate with IATA to get the airline information in the future.
+  * The data of Cargo IS was collected from airlines. However, it covers only 60 countries of the world, which means sometimes have to take into account the data representativity. Some important countries are missing, for example, India, vietnam, russia and almost all the african countries.
 
 ### Data loader 
 
 #### Instruction
 
-The first step is about how to load Cargo IS data. In the first drop-down menu, we could select the level of data granularity to be queried from Cargo IS (*e.g.*, airport to airport, country to country, region to region, etc). Then the year and the **O&D** (**O**rigin and **D**estination) of airfreight should be precised. You can check the box *"Plot evolution since 2010"* to load data of all the available year (2010-2016). When the box is checked, the year input will be ignored.
+The first step is about how to load Cargo IS data. In the first drop-down menu, we could select the level of data granularity to be queried (*e.g.*, airport to airport, country to country, region to region, etc). Then the year and the **O&D** (**O**rigin and **D**estination) of airfreight should be precised. You can check the box *"Plot evolution since 2010"* to load data of all the available year (2010-2016). When the box is checked, the year input will be ignored.
 
-After selecting the right parameters, click on **Load Data** button. Some summarize of the queried dataset will be shown on the top of this tab. A preview of the 50 first rows will appear on the right. You could do a quick check of the data. The data table could be downloaded by simply clicking on the **Download Data** button.
+After selecting the right parameters, click on **Load Data** button. Some summarize of the queried dataset will be shown on the top of this tab. A preview of the 50 first rows will appear on the right. You could do a quick check of the data structure. The dataset could be downloaded by simply clicking on the **Download Data** button.
 
-Now the data table is loaded and ready to be used!
+Now the dataset is loaded and ready to be used!
 
 \begin{figure}[!h]
   \centering
@@ -297,7 +289,7 @@ Now the data table is loaded and ready to be used!
 \end{figure}
 
 
-The data loading procedure will call the `CargoIS.SQL.query` function. The function will take the user parameters as inputs, generate an appropriate `Oracle SQL` code and send the query to the data server. The returned dataset is thus stocked in the global scope and it is ready to be used by other functions.
+The data loading procedure will call the user-defined function `CargoIS.SQL.query()`. The function will take the user parameters as inputs, generate an appropriate `Oracle SQL` code and send it to the data server. The returned dataset is thus stocked in the global scope of Shiny and it is ready to be used by other functions.
 
 ```{r eval=FALSE, echo=TRUE}
 # EXAMPLE
@@ -936,23 +928,23 @@ Inspired by project *LiMA*, a report generator could be used for automatic gener
 
 # Conclusion
 
-**R Shiny Dashboard** provides a solution of a light-weight and customizable data analysis/visualization tool. It turned out to be a good choice to fit the requests of Airbus Freighter Marketing team. **CDM** is thus a first step in Airbus freighter department as the response to the company level movement of digitalization.
+**R Shiny Dashboard** provides a solution of a light-weight and customizable data analysis/visualization tool. It turned out to be a good choice to fit the requests of the Airbus Freighter Marketing team. **CDM** is thus a first step in the Airbus freighter department as the response to the company level movement of digitalization.
 
-In this Digital Age, the revolutionary technologies opened us the door of sharing and collaborating. It dramatically changes the meaning of work, not only for individual people, but also for giant companies like Airbus. Digitalization **is not** only about having all the data. It is also about the way we do with our data, or with our business. 
+In this Digital Age, the revolutionary technologies opened the door of large scale sharing and collaborating. Not only you can complete a task more efficiently and accurately, but you can also share the results instantly with your team and accross the company. Digitalization **is not** only about having all the data, it is also about the way we handle our data and our business. 
 
-Interaction is the key word of this age. Faster and easier exchanges of information, better adaptability, smarter business intelligence, and the most important, higher end-user productivity, all these could produce big benefits for our business. Airbus is just at the beginning of the data digitalization, to keep our competitive, challenges still remain.
+Interaction is the key word of this age. It gives faster and easier exchanges of information, better adaptability, smarter business intelligence and most importantly, higher end-user productivity. All these could produce large benefits for our business. Airbus is just at the beginning of data digitalization. In order to keep us competitive, challenges still reside.
 
-The following are the domains that matter in my personal point of view:
+The following are the domains that matter the most from my point of view:
 
   * **Cloud**: It is definitely the most important part of digitalization. It provides shared computer processing resources and data services, which could be easily and optimally allocated to user according to the demand.
   
-  * **Collaboration**: We will need a platform to share, to work together in time. It should be possible for every employee to share their own project on the platform and all the others could become a contributor of it. 
+  * **Collaboration**: We need a platform to share and to work together simultaneously. It should be possible for every employee to share their own project on the platform and allow others to become contributors of it. 
   
   * **Big data**: Not only the quantity of data, but also the dimension of data is increasing exponentially. The data may seem very sparse and irrelevant to our business. New approach should be adopted to extract the maximum value from the data.
   
-I am very glad to see that some initial attempts are already realized in Airbus. Not only **CDM**, other Shiny Dashboard application are created as well. We also have a new built platform **Foundry**, where we could use SparkR to work on the collective data, share our codes and contribute to other colleagues' project.
+I am thrilled to see that some initial attempts are already realized in Airbus. Not only **CDM**, other Shiny Dashboard application are created as well. We also have a newly built platform **Foundry**, where we could use SparkR to work on the collective data, share our codes and contribute to other colleagues' project.
 
-Always stay open-mind with new technologies, keep our infrastructure up to data, Airbus will be able to reach a higher goal in the Digital Age.
+If we always stay open-mind with new technologies and keep our infrastructure up to data, I belivev Airbus will be able to reach a higher goal in the Digital Age.
 
 \newpage
 

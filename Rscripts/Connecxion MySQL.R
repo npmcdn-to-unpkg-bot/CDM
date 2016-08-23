@@ -17,7 +17,7 @@
 #   return(data)
 # }
 
-FR24.query <- function(code, connection = FR24, nb.ligne = -1){
+FR24.query <- function(code, connection, nb.ligne = -1){
   rs <- dbSendQuery(connection, code)
   data <- fetch(rs, n = nb.ligne)
   dbClearResult(rs)

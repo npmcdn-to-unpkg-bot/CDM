@@ -88,15 +88,31 @@ At the department level, the major challenge is the lack of an efficient and use
 
 There are also some Airbus-made tools for marketing department, like *Acper*, *OAG Builder*, *route06*, etc. These are very powerful and sophisticated programs dedicated for specific usage since a very long time. They are irreplaceable for some tasks but they are still not perfect. For example, in terms of learning difficulty, they both have a steep learning curve. Some special training session are needed to master these tools. And from a graphical design's point of view, they often remind me about the "old fashioned" software interface, which may be not enough intuitive and user-friendly. The need to visualize the analytic results in a modern way is thus urgent.
 
-Due to these facts, data digitalization inside Airbus should be done from two level. We will need an uniform and standardized plateform to stock and manage data at the company level. And inside the departments, new data mining and analysis tools are needed to support the works in the big data era. Some moves have already been realised inside Airbus. **BIO** is a platform which provide an automatic aggregation of different databases. **Foundry** is a cloud-based platform for collaboratively big data analysis built by Palantir Technologies.
+Due to these facts, data digitalization inside Airbus could be done from two level. We will need an uniform and standardized platform to stock and manage data at the company level. And inside the departments, new data mining and analysis tools are needed to support the works in the big data era. Some moves have already been realized inside Airbus. **BIO** is a platform which provide an automatic aggregation of different databases. **Foundry** is a cloud-based platform for collaboratively big data analysis built by Palantir Technologies.
 
-This document provide a solution for the development of a data analysis tool by using **R Shiny Dashboard**. **Shiny Dashboard** is a framework to create a light weight, powerful and interactive web application. It uses a reactive programming model so that outputs change instantly as users modify inputs. It is esay to use, no web designing language required. But further customization could be easily done with some HTML, CSS and JavaScript knowledge. 
+This document provide a feasible solution for the development of a data analysis tool by using **R Shiny Dashboard**. **Shiny Dashboard** is a framework to create a light weight, powerful and interactive web application. It uses a reactive programming model so that outputs change instantly as users modify inputs. It is easy to use, no web designing language required. But further customization could be easily done with some HTML, CSS and JavaScript knowledge. 
 
-In the first section of this document, installation and deployment prerequisites are presented. Then, detailed fonctionalities and the application structure are stated in section two in order to provide technical support for using and maintenance. In the third section, some suggestions for the future development of this application are proposed. The technical appendix could be found in the last section of the document.
+In the first section of this document, I will explain the reason for which **CDM** was born. After that, the installation and deployment prerequisites are presented. Then, detailed functionalities and the application structure, as well as the data structure, are stated in section two in order to provide technical support for using and maintenance. In the third section, some suggestions for the future development of this application are proposed. The technical appendix could be found in the last section of the document.
 
-# Prerequisites
 
-**Cargo Data Miner** (CDM) was developped with [**Microsoft R Open 3.2.5**](https://mran.revolutionanalytics.com/), which is a enhanced distribution of R. It support by defaut multi-thread computing and it is perfectly compatible with the [original **R**](https://www.r-project.org/). The user interface used during the development is [**RStudio**](https://www.rstudio.com/), which the the most common IDE of R.
+<!-- # Prerequisites -->
+
+# Why R shiny Dashboard?
+
+At the beginning of my internship, I have been asked to explore different cargo databases. Because of my statistical profile, I was using R to analyze and visualize these data. Lots of codes were written at that moment, as well as numbers of power-point slides. But my tutor and I realized that coding in R could not be a permanent solution for the needs of Freight Marketing (CSMX) team. Because the R is not a common tool inside marketing department and it is not that easy to learn for people with little programming knowledge.
+
+I started looking for a good way to make a reusable, easy-to-access but powerful data analytic tool. I learnt a lot about R at school so my first intention is to keep using R as the programming language. Furthermore, the numbers of R users at Airbus is increating steadly. It could be a big advantage for the further development of the code. 
+
+Shiny by Rstudio is a great tool that will fit our needs. Shiny offers the *reactive programming* framework that will fit perfectly our needs of a reusable tool. It allow us to produce different analysis from different inputs, without modifying the code. Meanwhile, the abundant R packages could make the life much better by dramatically reducing the programming work.
+
+What else? By using Shiny Dashboard, it is easy to integrate different shiny applications into a one-page web application. So that we will have one complex dashboard based on [**Bootstrap 3**](https://github.com/twbs/bootstrap) framework. It is intuitive, efficient and polyvalent.
+
+It has been four months since I started to develop **CDM**. Now the basic framework is almost done. In ther future, I wish that it could be helpful to make our work more efficient.
+
+
+# Deployment guide
+
+**Cargo Data Miner** (CDM) was developed with [**Microsoft R Open 3.2.5**](https://mran.revolutionanalytics.com/), which is a enhanced distribution of R. It support by default multi-thread computing and it is perfectly compatible with the [original **R**](https://www.r-project.org/). The user interface used during the development is [**RStudio**](https://www.rstudio.com/), which the the most common IDE of R.
 
 To make **CMD** work properly, there are two main methods.
 
@@ -139,7 +155,7 @@ In `~/CDM/CDM_user_manuel`, you will find the code of this use guide (written in
 * Step 1: Get R and other required software:
     + Install [**Microsoft R Open 3.2.5** from https://mran.revolutionanalytics.com/download/](https://mran.revolutionanalytics.com/download/) (to turn on the multi-thread computing support, install the MLK package as well), or you can install the [original **R** (64-bit) from https://cran.r-project.org/mirrors.html](https://cran.r-project.org/mirrors.html).
     
-    + Install [**RStuido** from https://www.rstudio.com/products/rstudio/](https://www.rstudio.com/products/rstudio/). This is optional but \underline{highly recommanded}. 
+    + Install [**RStuido** from https://www.rstudio.com/products/rstudio/](https://www.rstudio.com/products/rstudio/). This is optional but \underline{highly recommended}. 
     
     + **CDM** works with Internet Explorer but you could also install [Google Chrome](https://www.google.fr/chrome/browser/desktop/) for the best performance.
     
@@ -147,9 +163,9 @@ In `~/CDM/CDM_user_manuel`, you will find the code of this use guide (written in
     
 * Step 2: Connection Setup
 
-    + **CMD** will need the access right of three different databases. They are: **p595dodmp01** (Cargo IS, Seabury), **fr0-bio-p01** (BIO) and **fr0-dmds-p01** (FlightRadar 24). The user name and password are already pre-filled and there is no need to change, except for **BIO** database. Because you will need to grant the access right to your own *Windows* account to make the connection. To do so, you could ask *Aurelien Turina* for further information.
+    + **CMD** will need the access right of three different databases. They are: **p595dodmp01** (Cargo IS, Seabury), **fr0-bio-p01** (BIO) and **fr0-dmds-p01** (FlightRadar 24). The user name and password are already pre-filled and there is no need to change, except for **BIO** database. Because you will need to grant the access right to your own *Windows* account to make the connection. To do so, you could ask *Aurelien Turina* (<aurelien.turina@airbus.com>) or *Pierre Binet* (<pierre.binet@airbus.com>) for further information.
 
-    + `~/CDM/global.R` contains the connection parameters of these databases.  
+    + `~/CDM/server.R` contains the connection parameters of these databases.  
 
 ```{r eval = FALSE, echo = TRUE}
 ##########################################################
@@ -210,9 +226,9 @@ A Shiny dashboard application could contains three sources scripts:
 * a server script: `server.R`
 * a global environment script: `global.R`
 
-There is another structure of Shiny application where all the three main scripts could be integrated into one single scipt `app.R`. But here we only talk about the "traditional" structure.
+There is another structure of Shiny application where all the three main scripts could be integrated into one single script `app.R`. But here we only talk about the "traditional" structure.
 
-The UI script controls the layout and appearance of the app. The server script contains the instructions that your computer needs to build your app. And the glabal script defines objects in the global scope.
+The UI script controls the layout and appearance of the app. The server script contains the instructions that your computer needs to build your app. And the global script defines objects in the global scope.
 
 **Reactivie programming** is the fundamental of a Shiny Dashboard application. The main idea is to make it easy to wire up *input values* from a web page, trigger the R code to be (re)executed, and then have the results of your R code be written as *output values* back to the web page.
 
@@ -224,7 +240,7 @@ The following figure shows the three elements in Shiny reactive programming. **R
   \caption{Essential objects in reactive programming}
 \end{figure}
 
-After launching **CDM**, you will see the following welcome page. **CDM** has three parts: a header, a sidebar and a body. The header show the application name and some notification[^1], for example the database connection status, the app version and the developing progres. The sidebar could help you to navigate between different tabs The functionalities of these widgets will be presented in the following sections. Finally the body is the main aera where you will be able to interact with **CMD** and see the output.
+After launching **CDM**, you will see the following welcome page. **CDM** has three parts: a header, a sidebar and a body. The header show the application name and some notification[^1], for example the database connection status, the app version and the developing progress. The sidebar could help you to navigate between different tabs The functionalities of these widgets will be presented in the following sections. Finally the body is the main area where you will be able to interact with **CMD** and see the output.
 
 <!--- #TODO: ADD THE IMAGE OF HOMEPAGE CDM -->
 \begin{figure}[!h]
@@ -233,19 +249,35 @@ After launching **CDM**, you will see the following welcome page. **CDM** has th
   \caption{\textbf{CMD} home page}
 \end{figure}
 
-Five different tabs are displayed on the sidebar. Each tab contains also several subtabs. 
+Five different tabs are displayed on the sidebar. Each tab contains also several sub-tabs. 
 
 ## Cargo IS Database
 
-[Cargo IS](http://www.iata.org/services/statistics/intelligence/cargois/Pages/index.aspx) database is the first major conponent of **CDM**. It provides airport level Air Waybill data, including airfreight charges, weight, numbers of shipmens and it is the only ressource of cargo yield information for Airbus. 
+[**Cargo IS**](http://www.iata.org/services/statistics/intelligence/cargois/Pages/index.aspx) database is the first major component of **CDM**. It provides airport level Air Waybill data, including airfreight charges, weight, numbers of shipments and it is the only resource of cargo yield information for Airbus. 
+
+The database is stored on the server **p595dodmp01**, under the user folder **A269_CARGOIS**. The main data table is `CARGOIS_MONTHLYDATA`, which contains 33 columns. But only few of them contain usable information for analysis. `r paste(strsplit("WEIGHT_BREAK
+ORIGIN_AIRPORT_CODE
+DESTINATION_AIRPORT_CODE
+SALES_YEAR
+DESTINATION_CITY_CODE
+ORIGIN_CITY_CODE
+SALES_MONTH
+ORIGIN_COUNTRY_CODE
+WEIGHT_CHARGES_CURR_YEAR_USD
+OTHER_CHARGES_CURR_YEAR_USD
+WEIGHT_CURRENT_YEAR
+AWB_COUNT_CURRENT_YEAR
+GREATCIRCLEDISTANCE_KM", "\n")[[1]], sep = ", ")`
+
+**Important**: The database that we purchased does not contain any airline information. But a column called `AIRLINE_PREFIX` presents in the data table. It may be possible to negotiate with IATA to get the airline information in the future.
 
 ### Data loader 
 
 #### Instruction
 
-The first step is about how to load Cargo IS data. In the first dropdown menu, we could select the level of data granularity to be queried from Cargo IS (*e.g.*, airport to airport, country to country, region to region, etc). Then the year and the **O&D** (**O**rigin and **D**estination) of airfreight should be precised. You can check the box *"Plot evolution since 2010"* to load data of all the available year (2010-2016). When the box is checked, the year input will be ignored.
+The first step is about how to load Cargo IS data. In the first drop-down menu, we could select the level of data granularity to be queried from Cargo IS (*e.g.*, airport to airport, country to country, region to region, etc). Then the year and the **O&D** (**O**rigin and **D**estination) of airfreight should be precised. You can check the box *"Plot evolution since 2010"* to load data of all the available year (2010-2016). When the box is checked, the year input will be ignored.
 
-After selecting the right parameters, click on **Load Data** buttom. Some summerize of the queried dataset will be shown on the top of this tab. A preview of the 50 first rows will appear on the right. You could do a quick check of the data. The data table could be downloaded by simply clicking on the **Download Data** button.
+After selecting the right parameters, click on **Load Data** button. Some summarize of the queried dataset will be shown on the top of this tab. A preview of the 50 first rows will appear on the right. You could do a quick check of the data. The data table could be downloaded by simply clicking on the **Download Data** button.
 
 Now the data table is loaded and ready to be used!
 
@@ -265,7 +297,7 @@ Now the data table is loaded and ready to be used!
 \end{figure}
 
 
-The data loading procedure will call the `CargoIS.SQL.query` function. The function will take the user parameters as inpus, generate an appropriate `Oracle SQL` code and send the query to the data server. The returned dataset is thus stocked in the global scope and it is ready to be used by other functions.
+The data loading procedure will call the `CargoIS.SQL.query` function. The function will take the user parameters as inputs, generate an appropriate `Oracle SQL` code and send the query to the data server. The returned dataset is thus stocked in the global scope and it is ready to be used by other functions.
 
 ```{r eval=FALSE, echo=TRUE}
 # EXAMPLE
@@ -301,7 +333,7 @@ When the data loading procedure is complete, you can go to the following tabs to
 
 The first part of tab contains visualization of the **top *n* airports and air routes**. Figure 6 shows in the map the top 20 origin and destination airports. The surface of the circle represents the weight of shipment going through this airport. The darkness of the color represents the yield of the airport. The charts are interactive, you can zoom in/out with the mouse scroll wheel. You can also click on the legend to display/hide the origin/destination airports.
 
-The value of *n* could be modified by dragging the slider bar. You could also modify the size of the circle if sometimes the defaut size is too big/small.
+The value of *n* could be modified by dragging the slider bar. You could also modify the size of the circle if sometimes the default size is too big/small.
 
 The **Top air routes (O&D)** tab of the visualization chart shows the weight and yield of the most important air routes. Origin and destination airports are linked by blue curves with different thickness and darkness. The **thicker** the curve, the **more** the total weight and the **darker** the blue, the **higher** the yield.
 
@@ -363,7 +395,7 @@ The tab **Treemap** visualizes the relationship between different **nodes** (air
 
 You can click on the rectangle to see its child nodes[^2] (if exist), and right-click to see its parent node. A scale is shown on the top right to indicate the yield level. The tab **Table** will render the used data table for the visualization. The table contains four columns, *Name*, *Parent*, *Weight*, *GrossYield*. 
 
-Currently there is no fitable solution to generate a static downloadable image. So you may take a screen shot if you want to add the chart to your slides. 
+Currently there is no optimal solution to generate a static downloadable image. So you may take a screen shot if you want to add the chart to your slides. 
 
 #### Explaination
 
@@ -425,13 +457,13 @@ The next tab **Yield evolution** generates an airfreight evolution plot. **CDM**
 
 The x-axis represents the available months during the selected period. If the box "Plot evolution since 2010" in the data loaded page is checked, all the available data will be visualized (but the computing will also take a longer time).
 
-You could click on the curve to see detailed information of the choosen data point.
+You could click on the curve to see detailed information of the chosen data point.
 
 A data table appears on the bottom of the page. It contains all the data of the line chart. You could click on the download button to save it to the local.
 
 #### Explaination
 
-I would like to integrate the three curves (net yield, gross yield and weight) into one sigle chart. Thus two different y-axis are needed. The well known package `ggplot2` does not support two different y-axis in one chart so I will still use `googleVis` to generate the line chart.
+I would like to integrate the three curves (net yield, gross yield and weight) into one single chart. Thus two different y-axis are needed. The well known package `ggplot2` does not support two different y-axis in one chart so I will still use `googleVis` to generate the line chart.
 
 ```{r eval=FALSE, echo=TRUE}
 # Example of givsLineChart
@@ -449,7 +481,7 @@ gvisLineChart(data, xvar = "xaxis", yvar = c('yaxis_1', 'yaxis_2', 'yaxis_3'),
 
 ### Air Waybill Analysis
 
-An **air waybill** is a receipt issued by an international airline for goods and an evidence of the contract of carriage. It is the most important document issued by the carrier (directly of throught an authorised agent). Cargo IS contains the records the weight data and it regroups the air waybills into six categories, which are called **weight breaks**, regarding to its weight.
+An **air waybill** is a receipt issued by an international airline for goods and an evidence of the contract of carriage. It is the most important document issued by the carrier (directly or through an authorized agent). Cargo IS contains the records the weight data and it regroups the air waybills into six categories, which are called **weight breaks**, regarding to its weight.
 
 They are:
 
@@ -472,17 +504,17 @@ The proportion of the AWB of different categories in a market could be an indica
 
 The first row of this tab contains seven figures:
 
-- *Shipment frequency evolution* is a line chart which shows how the numbers of shipments change during the selected period. By defaut, there will be six curves representing repectively the different weight break.
+- *Shipment frequency evolution* is a line chart which shows how the numbers of shipments change during the selected period. By default, there will be six curves representing respectively the different weight break.
 - *Shipment weight distribution* is a bar chart which shows the distribution of the AWB of different weight break in the selected period.
 - *Weight vs. distance* is a stacked bar chart showing the sum of shipment weight by different intervals of distance. The colors represent the different weight breaks.
 - *Frequency vs. distance*: like the previous figure, it shows the numbers of shipments by different intervals of distance.
-- *Revenu vs. distance* shows the revenus (charges) of airfreight by different intervals of distance.
-- *Yield vs. distance* is a line chart showing the gross/net yield of by weight breaks and by diatance.
-- *Average weight vs. distance* takes into accout all the weight breaks and compute the weighted arithmetic mean of weight by distance.
+- *Revenu vs. distance* shows the revenues (charges) of airfreight by different intervals of distance.
+- *Yield vs. distance* is a line chart showing the gross/net yield of by weight breaks and by distance.
+- *Average weight vs. distance* takes into account all the weight breaks and compute the weighted arithmetic mean of weight by distance.
 
 For the charts 3, 4 ,5 and 6, if there is only one interval of distance, a pie chart will be created instead of a bar chart. All the charts can be downloaded by clicking "download PNG" button.
 
-On the left of the charts, some parameters can be changed to modify the charts. You can display/hide one or multiple weight break(s) by checking/unchecking the boxes. The second part "gross yield/net yield" corresponds to the yield type in the chart *Yield vs. distance*. The last two text input aera control the width and height of the downloaded image. 
+On the left of the charts, some parameters can be changed to modify the charts. You can display/hide one or multiple weight break(s) by checking/unchecking the boxes. The second part "gross yield/net yield" corresponds to the yield type in the chart *Yield vs. distance*. The last two text input area control the width and height of the downloaded image. 
 
 On the bottom of the page, the data table used for creating the charts is displayed. It could also be downloaded by clicking the download button.
 
@@ -513,7 +545,7 @@ To create these charts, the package `ggplot2` is extensively used.
 
 ### Yield Calculator
 
-The last subtab of Cargo IS is a marketing tool called yield calculator, which offers an automatic computing for air route cargo yield. It will read air routes from a `csv` file (uploaded by user), query *Cargo IS* database and display a data table with weight and yields of every air route in the uploaded list, as well as a air route map visualizing all the air routes by their cargo weight and cargo yield.
+The last sub tab of Cargo IS is a marketing tool called yield calculator, which offers an automatic computing for air route cargo yield. It will read air routes from a `csv` file (uploaded by user), query *Cargo IS* database and display a data table with weight and yields of every air route in the uploaded list, as well as a air route map visualizing all the air routes by their cargo weight and cargo yield.
 
 #### Instruction
 
@@ -546,7 +578,7 @@ Figure 13 show the data manipulation procedure. Two input are used. The first on
 <!-- _________Seabury database__________ -->
 ## Seabury Database
 
-The second part of this document consists analysis and visualizations of **Seabury Trade** database. Seabury Trade contains annual country level cargo weight and value information. It has not only the airfeight weight and value, but also for the other surface transportation. It provide an in-depth level of commodity type which could allow us to get some knowledge about the cargo type of the market.
+The second part of this document consists analysis and visualizations of **Seabury Trade** database. Seabury Trade contains annual country level cargo weight and value information. It has not only the airfreight weight and value, but also for the other surface transportation. It provide an in-depth level of commodity type which could allow us to get some knowledge about the cargo type of the market.
 
 Beside Seabury trade, there two other databases which could be useful for market knowledge. They are Seabury Express and Seabury. They could be very useful for the further development of the application.
 
@@ -560,7 +592,7 @@ As for Cargo IS query, the first step here also consists of data loading. You mu
 
 #### Explaination
 
-The start button trigers the user-defined function `Seabury.SQL.OD.query()`. It works just like `CargoIS.SQL.query()`: it will generate a SQL query that depends on the user input. Then it send the generated query to our SQL server and fetch the returned data.
+The start button triggers the user-defined function `Seabury.SQL.OD.query()`. It works just like `CargoIS.SQL.query()`: it will generate a SQL query that depends on the user input. Then it send the generated query to our SQL server and fetch the returned data.
 
 ```{r eval=FALSE, echo=TRUE}
 # Example
@@ -584,7 +616,7 @@ Seabury Trade has more than 70 000 000 rows so the data loading process may take
 
 You can click on the square to look further into the sub-categories of the selected commodity type. There are four different levels of categories, G1, G2, G3 and G4. The bigger the number, the higher the complexity. G1 level contains eight different categories but there are around 2000 in the G4 level.
 
-You could change to look at the ocean freight information by simply selecting the freight type from the dropdown menu. The data table is also downloadable by clicking **Download** button.
+You could change to look at the ocean freight information by simply selecting the freight type from the drop-down menu. The data table is also downloadable by clicking **Download** button.
 
 #### Explaination
 
@@ -607,24 +639,28 @@ treemap_sea_gvis(data, ORG, DST, YEAR)
 
 ### Evolution plot
 
+We may be able to predict the future by learning from the history. So it will be useful to know how the cargo weight/value of some specific commodities evolve during the last years. 
+
 #### Instruction
 The second major functionality of Seabury Trade tab is the cargo weight evolution plot. By selecting the name of commodity type, you can thus create a line chart that represents the evolution of airfreight weight since 2000. If the box "Plot all level" is checked, then all the data base will be loaded and visualized (This could take a very long time).
 
-There are four sub-tabs (G1LEVEL, G2LEVEL, G3LEVEL and G4LEVEL) representing the four different catogiries. The evolution of the sub-categories (if exist) of the selected type will be plotted following sub-tab. You can change the y-axis from cargo weight to cargo value.
+There are four sub-tabs (G1LEVEL, G2LEVEL, G3LEVEL and G4LEVEL) representing the four different categories. The evolution of the sub-categories (if exist) of the selected type will be plotted following sub-tab. You can change the y-axis from cargo weight to cargo value.
 
 <!-- TODO: download datatable -->
 The data table will be displayed in the last sub-tab.
 
-**Attention**: If you selected, for example, a G3 level category, then please go the the third sub-tab to get the correct line chart. The charts in the superior levels will be the same as the third tab, but the commodity name will be wrong. To know the level of category that you selected, you can count the number of "-" before the name of category.
+**Attention**: If you selected, for example, a G3 level category, then please go the the third sub-tab (G3LEVEL) to get the corresponded line chart. The charts in the superior levels will be the same as the third tab, but the commodity name will be wrong. To know the level of category that you selected, you can count the number of "-" before the name of category.
 
 #### Explaination
+
+The evolution plot of will use all the Seabury data starting from 2000. The user-defined function `Seabury.SQL.evo.query()` will query the data base and stock the returned data table into the reactive variable `DATA.SEA.GX()`. Then the function `sea.evo()` will be called to sum the weight and value by year and by commodity type (According to the input, it will sum the air freight or the ocean freight data). `Seabury.SQL.get.name()` will return the full name of the commodity types and the names will be added into the data table as a new column.  At the end, `Plot_ly()` will be used to create the evolution line chart. 
 
 
 
 <!-- ____________FlightRadar 24___________ -->
 ## FlightRadar 24 Database
 
-**FlighRadar 24** (FR24) is a rencently purchased database at Airbus. It is a Swedish internet-based service that provides aircraft flight information. The database that Airbus purchased from FR24 includs flight tracks, origins and destinations, flight numbers, registration numbers, flight positions (coordinates), altitude, heading and speed during 2014 and 2015. The data of FR24 mainly comes from the third party ADS-B (Automatic dependent surveillance-broadcast) receivers all over the world. The receivers collect data from any aircraft in their local aera that are equipped with an ADS-B transponder and upload to the internet in the real time. 
+**FlighRadar 24** (FR24) is a recently purchased database at Airbus. It is a Swedish internet-based service that provides aircraft flight information. The database that Airbus purchased from FR24 includes flight tracks, origins and destinations, flight numbers, registration numbers, flight positions (coordinates), altitude, heading and speed during 2014 and 2015. The data of FR24 mainly comes from the third party ADS-B (Automatic dependent surveillance-broadcast) receivers all over the world. The receivers collect data from any aircraft in their local area that are equipped with an ADS-B transponder and upload to the internet in the real time. 
 
 FR24 could be very valuable for Airbus freighter because it may fill the gap of the lack of express cargo airlines' data. In an other flight schedule database **OAG**, there is no data for express cargo airlines (like **UPS**, **FedEx** or **DHL**). However with FR24, we may be able to extract the real flight program <!--what is the right word?--> of these airlines, which we did not have any information before.
 
@@ -632,7 +668,7 @@ But, comparing with other databases, it has some particularities.
 
 * We have two stock location for this database. The first one is the **MySQL** server inside airbus (which is used by **CDM**). The second one is the cloud-based platform **Foundry** (could be queried by SparkR on Foundry). 
 
-* The data size is way larger than the other databases. Because it records the real-time position of aircraft, so we have about 1-2 Gb of data per day. **CDM** mainly uses the air routes data (which means Origin-Destination information). So I could still manipulate the data on my own desktop. But in the future, if we will need to use the position data of FR24, more computing capability will be necessairy. 
+* The data size is way larger than the other databases. Because it records the real-time position of aircraft, so we have about 1-2 Gb of data per day. **CDM** mainly uses the air routes data (which means Origin-Destination information). So I could still manipulate the data on my own desktop. But in the future, if we will need to use the position data of FR24, more computing capability will be necessary. 
 <!-- ask aur?lien -->
 
 * The data quality of FR24 is a major challenge for analysis. For example here I list three major problems of the database:
@@ -641,17 +677,24 @@ But, comparing with other databases, it has some particularities.
 
     2. There may be several different values indexing one same thing (*e.g.* In the column "Aircraft Type", both B77F, B77L, 77L and 77F represent Boeing 777 freighter).
 
-    3. The data could be merged incorrectly at the very begining of ADS-B raw data manipulation (*e.g.* the aircraft type of an aircraft registration number is not correct). This could be a problem of FlightRadar24 raw data.
+    3. The data could be merged incorrectly at the very beginning of ADS-B raw data manipulation (*e.g.* the aircraft type of an aircraft registration number is not correct). This could be a problem of FlightRadar24 raw data.
 
 These problems should be solved through two approaches. On one hand, we must return our feedback to FR24 in order to improve the data quality in the raw data level. On the other hand, inside Airbus, we will need to find a efficient method to detect and correct abnormal values in the database (See the section *Further development* for more details.)
 
 ### Data loader
 
-Due to the insufficient data quality, the data loading process of FR24 will be a bit more complexe than the two previous databases. It will be done in two step.
+Due to the insufficient data quality, the data loading process of FR24 will be a bit more complex than the two previous databases. It will be done in two step.
 
 First of all, **CDM** queries FR24 database according to user's input. Then, it will merge FR24 data with our BIO data by the registration number, in order to improve the data quality.
 
 #### Instruction
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=470px]{img/fr24_dataloader.PNG}
+  \caption{FR24 data loader}
+\end{figure}
+
 
 To load the database, you have to precise the data range (by clicking and navigating through the data range selection panel). Then there are several parameters can be set according to the user's need (none of the following parameters is obligatory).
 
@@ -663,14 +706,14 @@ To load the database, you have to precise the data range (by clicking and naviga
 
     + If Destination is missing, **CDM** will query all the flights that leave the origin airport
     + If Origin is missing, it will query all the flights that fly to the destination airport
-    + If Origin is the same as the Desination, it will query all the flights of the selected airport
+    + If Origin is the same as the Destination, it will query all the flights of the selected airport
     + If both Origin and Destination are missing, it will not filter the data by O&D
     
 * Registration number: Filter by the aircraft registration number(s)
 
 * Aircraft type: Filter by the aircraft type(s)
 
-By modifying the parameters, **CDM** generates automatically a SQL query that corresponds to your request. And the query text is showed in the text aera. If you are familiar with MySQL, you can directly modify it in the text box to create a more customizd query. To solve the problem 1, the query will ignore all the data with a missing origin or destination.
+By modifying the parameters, **CDM** generates automatically a SQL query that corresponds to your request. And the query text is showed in the text area. If you are familiar with MySQL, you can directly modify it in the text box to create a more customized query. To solve the problem 1, the query will ignore all the data with a missing origin or destination.
 
 Then click on the button **Query** to query FR24 database. The summary of FR24 data will be showed on the top right of the current tab. Then on the bottom of the page, a new box called *Data Cleaner* will appear. It will allow you to further remove the outliers in the returned data table in order to solve the problem 3.
 
@@ -686,8 +729,8 @@ The merged data can be downloaded by clicking on the download button.
   \caption{The data loading process of FR24}
 \end{figure}
 
-FR24 is stocked on a MySQL server inside Airbus. So the first step is to generate a SQL query that fits user's request. By using logical operators and string manipulation, the output query string is stored in `FR24_query()`. The text aera shows the content of `FR24_query()` and could be modified by keyboard. 
-Then, when the button **Query** is clicked, `input$go2_fr24` will trigger the SQL query. The query result will be stocked in `FR24_datatable()`. The infoboxes will be created based on some descriptive statistics and the preview of data table will be returned as well.
+FR24 is stocked on a MySQL server inside Airbus. So the first step is to generate a SQL query that fits user's request. By using logical operators and string manipulation, the output query string is stored in `FR24_query()`. The text area shows the content of `FR24_query()` and could be modified by keyboard. 
+Then, when the button **Query** is clicked, `input$go2_fr24` will trigger the SQL query. The query result will be stocked in `FR24_datatable()`. The info-boxes will be created based on some descriptive statistics and the preview of data table will be returned as well.
 
 Because of the data quality, I would like to create another filter process to detect the outliers in the data in order to further refine the data quality. The idea is to return the abnormal value in the **Data cleaner** box and let the user decide whether to keep it or not.
 
@@ -701,24 +744,63 @@ When the button **Enrich with BIO** is clicked, it will trigger the query of BIO
 
 #### Instruction
 
-<!-- add coordinates of airport  -->
-A map showing the location of every airport in the queried FR24 data table will be displayed after the data loading process. You could click on the markers to see the airport IATA code and airport name. In the tab **Network Analysis**, the network of the data table will be extracted and visulaized.
+\begin{figure}
+  \centering
+  \includegraphics[width=470px]{img/fr24_airline_network.PNG}
+  \includegraphics[width=470px]{img/fr24_airline_airports.PNG}
+  \includegraphics[width=470px]{img/fr24_airline_heatmap.PNG}
+  \caption{Network visualization for FedEx Boeing 777 Freighter}
+\end{figure}
 
-Every circle on the map represents an airport. The size represents its importance in the network. All the circles are colored by their corresponding region. You can filter the airports by their regions by clicking the dropdown menu on the top left.
+
+<!-- add coordinates of airport  -->
+A map showing the location of every airport in the queried FR24 data table will be displayed after the data loading process. You could click on the markers to see the airport IATA code and airport name. In the tab **Network Analysis**, the network of the data table will be extracted and visualized.
+
+Every circle on the map represents an airport. The size represents its importance in the network. All the circles are colored by their corresponding region. You can filter the airports by their regions by clicking the drop-down menu on the top left.
 
 The arrow shows the direction of the airfreight flow. 
 
-You can click on an airport to filter all its neighbour airports (airports that are directly linked to this airport). You can also drag the circle to change its position. 
+You can click on an airport to filter all its neighbor airports (airports that are directly linked to this airport). You can also drag the circle to change its position. 
+
+In the third tab analysis, you will see a heatmap showing the distance (minimum numbers of flight) between the airports and a tool to find the shortest path in terms of numbers of flight. You can select the origin and the destination from the two drop-down menus. For the heatmap, the darker the blue, the shorter the path. If the color is white (no matter what the value of $z$ is), it means that there is no flight in between.
 
 #### Explaination
 
+Once the reactive value `FR24_BIO_AC()` is created, **CDM** will create `FR24_NW_NODE()`, `FR24_NW_EDGE()` and `FR24_NW_igraph()`. They are three datasets that will be used to generate network visualization.
 
+The airport map is created by using an R package `Leaflet`. It is an API of the open-source JavaScript library in R. It uses *OpenStreetMap* data to create interactive map. The R package contains only a part of its features, further development could be done by written directly on JavaScript.
+
+```{r eval=FALSE, echo=TRUE}
+# EXAMPLE: output$fr24_airline_network_map
+# airport is a dataframe containing airports name, longitude and latitude
+leaflet(airport) %>% 
+      addTiles(urlTemplate = "YOUR MAPBOX TEMPLATE",
+               attribution = 'YOUR ATTRIBUTION') %>%
+      addMarkers(~long, ~lat, popup = ~htmlEscape(paste(IATA,name, sep = ": ")))
+
+```
+
+The network visualization is created by using `visNetwork` package. It takes `FR24_NW_NODE()`, `FR24_NW_EDGE()` as the *nodes* and *edges* parameters.
+
+`FR24_NW_igraph()` is a `igraph` object created from the adjacency matrix (which was created by `igraph::get.adjacency()`). It is a directed, non-weighted adjacency matrix. I used to take the air routes frequency as the weight, but it will lead to some results that do not have any sense. For example in the shortest path computing, if we take into account the frequency of air routes, the shortest path will contain the more "important" air routes instead of the shortest path. For future development, we may add the read great circle distance of the air routes and find a model that determines the weight of air route.
+
+`FR24_NW_igraph()` is thus used for the computing of distance matrix and the heatmap visualization.
+
+### Airport traffic*
+
+This tab provides airport traffic information. You will see the take-off rate of the selected airport, the numbers of grounding aircraft, the congestion status, etc.
+
+### Aircraft utilization*
+
+In this tab, you can check for each selected aircraft, its utilization (flying time), grounding time and missing time (period that we do not have any information).
+
+You will see the most frequent air routes of the aircraft as well.
 
 ## Other features
 
 ### Connection status check
 
-The first link icon on the top right shows the conncection status of **CDM** to the databases. If all the databases are seccesfully connected, the color around the number will be blue. Otherwise the backgroud color will turn red.
+The first link icon on the top right shows the connection status of **CDM** to the databases. If all the databases are successfully connected, the color around the number will be blue. Otherwise the background color will turn red.
 
 You can click on the icon to see the detailed connection information.
 
@@ -746,7 +828,7 @@ If the class of all the connectors are not `'try-error'`, the value `OK` will be
 
 ### Server-side selectize input
 
-There are several different methods to have a reactive select input. For example `uiOutput() + renderUI({selectInput()})`. But in some situation, the input contains too many elements so that the proformence of `renderUI()` may be insufficient. In this situation, `selectizeInput() + updateSelectizeInput()` will be very useful. 
+There are several different methods to have a reactive select input. For example `uiOutput() + renderUI({selectInput()})`. But in some situation, the input contains too many elements so that the performance of `renderUI()` may be insufficient. In this situation, `selectizeInput() + updateSelectizeInput()` will be very useful. 
 
 ```{r eval=FALSE, echo=TRUE}
 # Example
@@ -759,11 +841,11 @@ shinyServer(function(input, output, session) {
 })
 ```
 
-The server-side selectize input uses R to process searching, and R will return the filtered data to selectize. It is widely use in **CDM** and it greatly boosts the interactive performance.
+The server-side `selectizeInput` uses R to process searching, and R will return the filtered data to `selectize`. It is widely use in **CDM** and it greatly boosts the interactive performance.
 
 ### User session log (still under development)
 
-The idea of this feature is to create a interface where the experienced R user could get the system log information and interactive with R by coding. But now I still did not find a way to capture the R consol's output and return it into **CDM**. Now you can only call a "so-called" console of **CDM** by pressing the `~` button of your keyboard. It will display your detailed connection status.
+The idea of this feature is to create a interface where the experienced R user could get the system log information and interactive with R by coding. But now I still did not find a way to capture the R console's output and return it into **CDM**. Now you can only call a "so-called" console of **CDM** by pressing the `~` button of your keyboard. It will display your detailed connection status.
 
 This feature is done by using a JS script.
 ```{r eval=FALSE, echo=TRUE}
@@ -777,21 +859,15 @@ fluidRow(
          ')
 )
 
-
 # server.R
 output$consol <- renderUI({
     show = FALSE
-    
     if(is.null(input$key_track)){
-      
     } else if (input$key_track == 126) {
       show <- TRUE
     }
-    
     if(show){
-      
       HTML('<!-- HTML CODE HERE -->')
-
     } else {
       p('')
     }
@@ -800,6 +876,85 @@ output$consol <- renderUI({
 
 
 # Future Development
+
+Several functionalities and features of **CDM** is still under development. Some existing features could be improved and new functionalities could be added. 
+
+## Improvement of existing features
+
+### Speed up data processing
+
+  * Some functions still use `data.frame` objects to manipulate data. In order to have a faster processing speed, the package `data.table` should be used extensively. 
+  * Avoid using `cbind` to expanding existing data structures. Try always to initialize it and then fill them in.
+  * Store the results and access them rather than repeatedly recalculating.
+  * Instead of using loops, try to use `apply(), sapply(), lapply()`.
+  * Try to use multiple-thread computing (with MRO or packages like `parallel` )
+
+### Downloadable images
+
+All the `ggplot2` chart could be downloaded. However, for the charts created with `googleVis`, we will need to find a solution to generate a static image that could be downloaded. For those which are generated by `plot_ly`, figure out the problem why sometime the button *download* does not work.
+
+### Database connections
+
+Optimize the control of existing connection, automatically close those which are not used any more to gain resources. 
+
+### Data cleaner of FR24
+
+Create a more accurate algorithm to detect the outliers of the data. Then, instead of using `selectizeInput()`, try to find a more pretty way to interact and filter the data.
+
+Optimize the data loading process of FR24 to make it more intuitive. Try to avoid clicking twice on the button to get the final cleaned data table.
+
+### Personalized error message
+
+In some situation, **CDM** will stop running and crash if the data structure could not be created properly (for example, if the query result is empty). In these cases, render a personalized error message in order to avoid the crash of application.
+
+### Color of the treemap and circle size of top airport map
+
+Find a algorithm to allocate a more appropriate value that determines the color of squares in the treemaps and the size of circle in airport map.
+
+Then, try to make the color of treemap horizontally comparable. This means that you will be able to compare the color in different treemaps. Now you can only compare the color within on treemap.
+
+### Modulize the application code
+
+Inspired by the article [Modularizing Shiny app code](http://shiny.rstudio.com/articles/modules.html), When **CDM** grows larger and more complicated, the complexity of code grows as well.
+
+**Modules** should be used in order to make the code maintenance easier.
+
+## New features to be added in the future
+
+### A general chart creating tool
+
+The idea is to make the data visualization power of R be usable for everyone. To do so, I would like to create a visualization tool that could generate a customizable chart from a user uploaded `csv` or `xlsx` file. The file contents could be varied.
+
+### Standardise the definitions of variable
+
+In **CDM**, the definitions of variable may vary according to databases. For example the definition of *region* in **Cargo IS** and **Seabury**. If we could have a standard and unique definition within **CDM**, then it will be possible to merge these databases and increase the dimension of data.
+
+### Automated reports generator
+
+Inspired by project *LiMA*, a report generator could be used for automatic generation of a `pdf`, `doc` or `html` file, which contains all the analysis results created in **CDM** (or even from an uploaded `xlxs` file). The R package `knitr` could be a good choice to do this task.
+
+
+# Conclusion
+
+**R Shiny Dashboard** provides a solution of a light-weight and customizable data analysis/visualization tool. It turned out to be a good choice to fit the requests of Airbus Freighter Marketing team. **CDM** is thus a first step in Airbus freighter department as the response to the company level movement of digitalization.
+
+In this Digital Age, the revolutionary technologies opened us the door of sharing and collaborating. It dramatically changes the meaning of work, not only for individual people, but also for giant companies like Airbus. Digitalization **is not** only about having all the data. It is also about the way we do with our data, or with our business. 
+
+Interaction is the key word of this age. Faster and easier exchanges of information, better adaptability, smarter business intelligence, and the most important, higher end-user productivity, all these could produce big benefits for our business. Airbus is just at the beginning of the data digitalization, to keep our competitive, challenges still remain.
+
+The following are the domains that matter in my personal point of view:
+
+  * **Cloud**: It is definitely the most important part of digitalization. It provides shared computer processing resources and data services, which could be easily and optimally allocated to user according to the demand.
+  
+  * **Collaboration**: We will need a platform to share, to work together in time. It should be possible for every employee to share their own project on the platform and all the others could become a contributor of it. 
+  
+  * **Big data**: Not only the quantity of data, but also the dimension of data is increasing exponentially. The data may seem very sparse and irrelevant to our business. New approach should be adopted to extract the maximum value from the data.
+  
+I am very glad to see that some initial attempts are already realized in Airbus. Not only **CDM**, other Shiny Dashboard application are created as well. We also have a new built platform **Foundry**, where we could use SparkR to work on the collective data, share our codes and contribute to other colleagues' project.
+
+Always stay open-mind with new technologies, keep our infrastructure up to data, Airbus will be able to reach a higher goal in the Digital Age.
+
+\newpage
 
 # Appendix: Troubleshooting
 
@@ -826,7 +981,7 @@ If the problem still exists, check the [**ROracle** package installation instruc
 
 ## Download and install an R package manually
 
-Some of the R package could not be installed directly from **CRAN**, for example the package `ROracle`. In this situation, the manuel installation will be needed.
+Some of the R package could not be installed directly from **CRAN**, for example the package `ROracle`. In this situation, the manual installation will be needed.
 
 Here I will show the installation process for `ROracle`.
 
@@ -851,8 +1006,16 @@ After the installation, the package could be called by
 library(ROracle)
 ```
 
-
-
+# Bibliography
+  
+  * Patrick Burns, *The R Inferno*, [http://www.burns-stat.com/pages/Tutor/R_inferno.pdf](http://www.burns-stat.com/pages/Tutor/R_inferno.pdf)
+  * Navarro, Gonzalo (2001), [*A guided tour to approximating string matching*](http://repositorio.uchile.cl/bitstream/handle/2250/126168/Navarro_Gonzalo_Guided_tour.pdf), ACM Computing Surveys. 33 (1): 31–88. doi:10.1145/375360.375365
+  * `Plot_ly` documents, [https://plot.ly/r/](https://plot.ly/r/)
+  * `Google Chart` documents, [https://developers.google.com/chart/interactive/docs/](https://developers.google.com/chart/interactive/docs/)
+  * `leaflet` documents, [http://leafletjs.com/reference.html](http://leafletjs.com/reference.html)
+  
+  
+  
 <!--- Footnotes -->
 [^1]: Some features are still under development.
 [^2]: For example, **country** is the child node of **region**, and it is the parent node of **airport**.

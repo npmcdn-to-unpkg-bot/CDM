@@ -7,6 +7,325 @@
 
 library(shinydashboard)
 
+###### ____SESSIONAL ENVIRONEMENT SETTING____ ######
+
+####################################################
+#' CONNECTION PARAMETERS
+#' Modify it before the first run of the application
+####################################################
+#' ROracle connection string
+#' for Cargo IS, Seabury
+host = 'p595dodmp01'
+port = 1521
+sid = 'DBUPA269'
+username_cargois <- 'CARGO'
+password_cargois <- 'dbu1_cargo'
+
+
+#' RODBC MS SQL server connection string
+#' for BIO
+driver_bio <- 'SQL Server'
+server_bio <- 'fr0-bio-p01'
+port_bio <- 10335
+username_bio <- ''
+password_bio <- ''
+trusted_connection_bio <- TRUE # if TRUE connect with windows login and pw
+
+
+#' RMySQL MySQL connection string
+#' for FlightRadar 24
+user_fr24 <- "user_ext"
+password_fr24 <- "fr0-dmds-p01"
+dbname_fr24 <- 'FR24'
+host_fr24 <- "fr0-dmds-p01"
+
+########## ___CARGO IS, SEABURY CONNECTION #################
+CargoDBcon <- function(host, port, sid, username_cargois, password_cargois){
+  drv = dbDriver('Oracle')
+  connect_string_cargois <- paste("(DESCRIPTION=",
+                                  "(ADDRESS=(PROTOCOL=tcp)(HOST=", host, ")(PORT=", port, "))",
+                                  "(CONNECT_DATA=(SID=", sid, ")))", sep = "")
+  
+  CargoDB <- try(dbConnect(drv, username = username_cargois, password = password_cargois, dbname = connect_string_cargois))
+  return(CargoDB)
+}
+
+CargoDB <- CargoDBcon(host, port, sid, username_cargois, password_cargois)
+
+if(class(CargoDB) == 'try-error'){
+  statu_cargois <- 'Failed'
+  
+  choice.year <- 'ERROR: Connection to Cargo IS failed'
+  choice_year_sea <- 'ERROR'
+  choice_gx_code <- 'ERROR'
+  choice.city <- 'ERROR: Connection to Cargo IS failed'
+  choice.region.cargois <- 'ERROR: Connection to Cargo IS failed'
+  choice.country <- 'ERROR: Connection to Cargo IS failed'
+  choice.airport <- 'ERROR: Connection to Cargo IS failed'
+  
+  choice.region.seabury <- 'ERROR'
+  choice.sea.country <- 'ERROR'
+}else{
+  statu_cargois <- 'OK'
+  source('Rscripts/CargoIS.SQL.query.R')
+  source('Rscripts/CargoIS.SQL.query.weight.R')
+  source('Rscripts/CargoIS.weight.evolution.R')
+  source('Rscripts/CargoIS.yield.evolution.R')
+  source('Rscripts/Code.finder.R')
+  source('Rscripts/sea.evo.R')
+  source('Rscripts/Seabury.SQL.evo.query.R')
+  source('Rscripts/Seabury.SQL.get.code_name.R')
+  choice_gx_code <- Seabury.SQL.get.code(CargoDB)
+  
+  source('Rscripts/Seabury.SQL.OD.query.R')
+  source('Rscripts/Seabury.get.year.R')
+  source('Rscripts/Yield_Cargo_evolution.R')
+  
+  source('Rscripts/CargoIS.get.input.list.R')
+  choice.year <- list_cargois_year(CargoDB)
+  choice.city <- list_cargois_city(CargoDB)
+  choice.region.cargois <- list_cargois_region(CargoDB)
+  choice.country <- list_cargois_country(CargoDB)
+  choice.airport <- list_cargois_airport(CargoDB)
+  
+  source('Rscripts/Seabury.get.input.list.R')
+  choice_year_sea <- list_sea_year(CargoDB)
+  choice.region.seabury <- list_sea_region(CargoDB)
+  choice.sea.country <- list_sea_country(CargoDB)
+}
+
+############ ___connect to BIO SQL server ##############
+BIOcon <- function(driver_bio, server_bio, port_bio){
+  connect_string_bio <- paste0('driver={', driver_bio, '}; server=', server_bio, ',', port_bio, '; ',
+                               'trusted_connection=true')
+  BIO <- try(odbcDriverConnect(connect_string_bio))
+  return(BIO)
+}
+BIO <- BIOcon(driver_bio, server_bio, port_bio)
+
+if(class(BIO) == 'RODBC'){
+  statu_bio <- 'OK'
+  source('Rscripts/get.airport.loc.R')
+  choice.bio.airport <- get.airline.code()
+}else{
+  statu_bio <- 'Failed'
+  choice.bio.airport <- 'ERROR: Connection to BIO failed'
+}
+
+############ ___connect to FR24 ############ 
+FR24con <- function(user_fr24,password_fr24,dbname_fr24,host_fr24){
+  all_cons <- dbListConnections(MySQL())
+  for(con in all_cons){
+    dbDisconnect(con)
+  }
+  FR24 <- try(dbConnect(MySQL(), user=user_fr24, password=password_fr24,
+                        dbname=dbname_fr24, host=host_fr24))
+  return(FR24)
+}
+FR24 <- FR24con(user_fr24,password_fr24,dbname_fr24,host_fr24)
+
+if(class(FR24) == 'try-error'){
+  statu_fr24 <- 'Failed'
+  choice.ACtype.fr24 <- 'ERROR: Connection to FlightRadar24 failed'
+}else{
+  statu_fr24 <- 'OK'
+  source('Rscripts/Connecxion MySQL.R')
+  source('Rscripts/Fr24.get.input.list.R')
+  choice.ACtype.fr24 <- list_fr24_ACtype(connection = FR24)
+}
+
+# load other functions
+
+source('Rscripts/grs_net_yield.R')
+source('Rscripts/Plot.air.route.html.R')
+source('Rscripts/info_global.R')
+source('Rscripts/Plot.airport.html.R')
+source('Rscripts/region_gy_ny_evo.R')
+source('Rscripts/treemap_cargois_gvis.R')
+
+
+######## ___load lists ######## 
+choice.level = list("Region - Region"= 'R2R',
+                    'City - City' = 'T2T',
+                    'Country - Region' ='C2R',
+                    'Region - Country'='R2C',
+                    'Country - Country'= 'C2C',
+                    'Country - World'='C2W',
+                    'World - Country'='W2C',
+                    'Region - Airport'='R2A',
+                    'Airport - Region'='A2R',
+                    'Airport - Airport' = 'A2A',
+                    'ALL' = 'ALL')
+choice.projection = list("Mercator" = 'Mercator', 
+                         'Orthographic' = 'orthographic')
+
+choice.compare = list('Gross yield' =  'gross_yield', 
+                      'Net yield'= 'net_yield')
+
+choice.level.sea = list("Region-Region"= 'R2R',
+                        'Country-Region' ='C2R',
+                        'Region-Country'='R2C',
+                        'Country-Country'= 'C2C',
+                        'Country-World' = 'C2W',
+                        'World-Country' = 'W2C',
+                        'Region-World' = 'R2W',
+                        'World-Region' = 'W2R',
+                        'ALL' = 'ALL')
+
+choice.level.sea.GX = list("G1"= 'G1NAME',
+                           'G2' ='G2NAME',
+                           'G3'='G3NAME',
+                           'G4'= 'G4NAME',
+                           'NA'= '<NA>')
+
+choice.level.sea.size = list('Air weight' = 'AIRWEIGHT',
+                             'Air value' = 'AIRVALUE',
+                             'Surface weight' = 'SFCWEIGHT',
+                             'Surface value' = 'SFCVALUE')
+
+choice.color = list('Red' = '#E74C3C',
+                    'Green' = '#52BE80',
+                    'Orange' = '#EB984E',
+                    'Grey' = '#2C3E50',
+                    'Blue' = '#3498DB')
+
+choice.size = list( '8' = 8,
+                    '1' = 1,
+                    '2' = 2,
+                    '3' = 3,
+                    '4' = 4,
+                    '5' = 5,
+                    '10'= 10)
+
+choice.sfc.air = list( 'Air' = 'AIRWEIGHT_AIRVALUE',
+                       'Surface' = 'SFCWEIGHT_SFCVALUE')
+
+choice.level.sea.GX.level= list("G1"= 'G1',
+                                'G2' ='G2',
+                                'G3'='G3',
+                                'G4'= 'G4',
+                                'ALL'= '<NA>')
+
+choice.pt.size.top.apt = list('small'= 1000000,
+                              'medium' = 500000,
+                              'big' = 100000,
+                              'very big' = 50000,
+                              'huge' = 5000)
+
+choice.codefinder <- list('Airport'='airport',
+                          'Country'='country',
+                          'Region (CargoIS)' = 'region(cargois)',
+                          'Airline'='airline',
+                          'GXCODE (Seabury trade)' = 'gxcode'
+)
+
+# ___FUNCTIONS ####
+
+# Function to create the data table for the plot of {AWB weight evolution}
+ShipmentEvo = function(data){
+  data$yearmonth <- paste(data$SALES_YEAR,data$SALES_MONTH,'1', sep = '-') # create new column = YEAR+MONTH
+  x = data.frame(Months=data$yearmonth, wb=data$WEIGHT_BREAK,freq = data$AWB_COUNT_CURRENT_YEAR, stringsAsFactors = FALSE)
+  evo = aggregate(x$freq, by=list(Months=x$Months, weight_break = x$wb), FUN=sum)
+  evo$Months <- as.POSIXct(evo$Months)
+  evo <- evo[order(evo$Months),]
+  return(evo)
+  # WeightBreak <- c('[0-45[','[45-100[','[100-300[', '[300-500[', '[500-1000[', '[1000+') #define weight breaks
+  # date <- sort(unique(evo$Months))
+  # # create dataframe
+  # df <- data.frame()
+  # 
+  # for(wb in WeightBreak){
+  #   row <- data.frame(t(subset(evo, evo$weight_break == wb)$x)) # create new row of the evo of 
+  #                                                               # a weightbreake
+  #   colnames(row) <- substr(date,1,10)
+  #   # row.names(row) <- wb
+  #   df <- rbind.fill(df, row)
+  # }
+  # 
+  # 
+  # df <- data.frame(t(df))
+  # colnames(df) <- WeightBreak
+  # return(df)
+}
+
+# Function to create treemap for SEABURY GXCODE
+#' data: an output datatable of Seabury.SQL.OD.query()
+#' if AIR = TRUE then output airfreight value
+#' otherwise, output surface freight value
+treemap_dt_sea_gvis <- function(data, AIR = TRUE){
+  data[is.na(data)] <- 0
+  if(AIR){
+    G4 <- aggregate(x = list('WEIGHT' = data$AIRWEIGHT,
+                             'VALUE' = data$AIRVALUE), 
+                    by = list('NAME'= data$G4NAME, 'PARENT'=data$G3NAME), FUN = sum)
+    
+    G3 <- aggregate(x = list('WEIGHT' = data$AIRWEIGHT,
+                             'VALUE' = data$AIRVALUE), 
+                    by = list('NAME'= data$G3NAME, 'PARENT'=data$G2NAME), FUN = sum)
+    
+    G2 <- aggregate(x = list('WEIGHT' = data$AIRWEIGHT,
+                             'VALUE' = data$AIRVALUE), 
+                    by = list('NAME'= data$G2NAME, 'PARENT'=data$G1NAME), FUN = sum)
+    
+    G1 <- aggregate(x = list('WEIGHT' = data$AIRWEIGHT,
+                             'VALUE' = data$AIRVALUE), 
+                    by = list('NAME'= data$G1NAME, 'PARENT'= data$G1NAME), FUN = sum)
+    G1$PARENT <- 'All commodities'
+    
+  } else {
+    
+    G4 <- aggregate(x = list('WEIGHT' = data$SFCWEIGHT,
+                             'VALUE' = data$SFCVALUE), 
+                    by = list('NAME'= data$G4NAME, 'PARENT'=data$G3NAME), FUN = sum)
+    
+    G3 <- aggregate(x = list('WEIGHT' = data$SFCWEIGHT,
+                             'VALUE' = data$SFCVALUE), 
+                    by = list('NAME'= data$G3NAME, 'PARENT'=data$G2NAME), FUN = sum)
+    
+    G2 <- aggregate(x = list('WEIGHT' = data$SFCWEIGHT,
+                             'VALUE' = data$SFCVALUE), 
+                    by = list('NAME'= data$G2NAME, 'PARENT'=data$G1NAME), FUN = sum)
+    
+    G1 <- aggregate(x = list('WEIGHT' = data$SFCWEIGHT,
+                             'VALUE' = data$SFCVALUE), 
+                    by = list('NAME'= data$G1NAME, 'PARENT'= data$G1NAME), FUN = sum)
+    G1$PARENT <- 'All commodities'
+  }
+  
+  tt <- rbind(G1,G2,G3,G4)
+  all_comm <- data.frame('NAME'='All commodities', 'PARENT' = NA, 'WEIGHT' = sum(tt$WEIGHT), 'VALUE'=sum(tt$VALUE))
+  tt <- rbind(all_comm, tt)
+  # tt$NAME <- gsub("- ", "", tt$NAME)
+  # tt$PARENT <- gsub("- ", "", tt$PARENT)
+  tt <- tt[tt$WEIGHT != 0,]
+  tt$VALUEPERKILO <- (tt$VALUE/tt$WEIGHT)
+  tt$logVALUEPERKILO <- log((tt$VALUE/tt$WEIGHT)+1)
+  tt$logVALUEPERKILO[is.na(tt$logVALUEPERKILO)] <- 0
+  tt$VALUEPERKILO[is.na(tt$VALUEPERKILO)] <- 0
+  return(tt)
+}
+
+treemap_sea_gvis <- function(data, ORG, DST, YEAR){
+  title <- paste('Treemap of commodity types from ',ORG,' to ',DST,' ', YEAR, sep = '')
+  gvisTreeMap(data = data, idvar = 'NAME', parentvar = 'PARENT', sizevar = 'WEIGHT',
+              colorvar = 'logVALUEPERKILO',
+              options=list(width='100%', height=670,
+                           fontSize=16,
+                           minColor='#F5B041',
+                           midColor='#F0F3F4',
+                           maxColor='#5499C7',
+                           headerHeight=20,
+                           fontColor='black',
+                           title= title ,
+                           # highlightOnMouseOver= 'true',
+                           # useWeightedAverageForAggregation= 'true',
+                           showScale=TRUE))
+}
+
+
+###################################
+#### ++SHINY DASHBOARD START++ ####
+###################################
 function(input, output, session) {
   
   startTime <- Sys.time()
@@ -26,16 +345,13 @@ function(input, output, session) {
     
     if(show){
       HTML('
-                 
                  <div class="w3-card-2 w3-margin">
                  <div class="w3-container w3-padding w3-red">
                  <h4 style="font-family: Lucida Console, Monaco, monospace" >
                  Console </h1>
                  </div>
                  
-                 <div class="w3-container w3-white ">
-                 ', 
-
+                 <div class="w3-container w3-white ">', 
                  paste(sep = "",
                        "<p>protocol: ", session$clientData$url_protocol, "</p>",
                        "<p>hostname: ", session$clientData$url_hostname, "</p>",
@@ -43,12 +359,9 @@ function(input, output, session) {
                        "<p>port: ",     session$clientData$url_port,     "</p>",
                        "<p>search: ",   session$clientData$url_search,   "</p>",
                        "<p>Start time: ",   startTime,   "</p>"
-                 )
-
-                  ,'
-                 </div>
-                 </div>      ')
-      # box(width = 12, p(capture.output(warnings())))
+                 ),
+           '</div></div>'
+           )
     } else {
       p('')
     }
@@ -130,6 +443,14 @@ function(input, output, session) {
 
   
 ######### _______LOAD DATA__________ ##########
+  # UPDATE INPUT ####
+  updateSelectInput(session, "level", choices = choice.level)
+  updateSelectInput(session, "year2", choices = choice.year) 
+  updateSelectInput(session, "projection", choices = choice.projection) 
+  updateSelectInput(session, "compare", choices = choice.compare) 
+  updateSelectInput(session, "level.sea", choices = choice.level.sea) 
+  updateSelectInput(session, "sfc.air", choices = choice.sfc.air) 
+  updateSelectInput(session, "level_codefinder", choices = choice.codefinder) 
   
   # Render select ORG DST ####
   # _Cargo IS ####
@@ -912,48 +1233,7 @@ function(input, output, session) {
   })
   
 
-  
-  # Statistical analysis ####
-  # 1. get ESAD ####
-  # can not use the folloing methode, tooooo slow
 
-# ______________________________________________
-#   ESAD_cargois <- eventReactive(DATA(), {
-#     df <- data.frame(DATA(),stringsAsFactors = FALSE)
-#     df <- df[complete.cases(df),]
-#     # get the unique ORG DST pairs
-#     orgdst <- unique(paste(df$ORIGIN_AIRPORT_CODE, df$DESTINATION_AIRPORT_CODE,
-#                            sep = ""))
-#     
-#     # make the query 
-#     body = "SELECT from_.IATA AS ORG, 
-# to_.IATA AS DST, 
-# apt.DISTANCE, 
-# apt.ESAD 
-# FROM BIO_NEO_PROD.bio.AIRPORT_PAIR apt 
-# INNER JOIN BIO_NEO_PROD.bio.AIRPORT from_ ON apt.ORG_AIRPORT_ID = from_.AIRPORT_ID 
-# INNER JOIN BIO_NEO_PROD.bio.AIRPORT to_ ON apt.DST_AIRPORT_ID = to_.AIRPORT_ID "
-#     
-#     ## generate the part 'WHERE BLABLABLA'
-#     query <- paste(orgdst, collapse = "' OR from_.IATA+ to_.IATA = '")
-#     query2 <- paste("WHERE (from_.IATA+ to_.IATA = '", query, "')", sep = "")
-#     
-#     ## Final query
-#     query_final <- paste(body, query2, sep = "")
-#     query_final
-#     # send query to BIO
-#     # sqlQuery(BIO, query_final)
-#   })
-#   
-#   # output$test3 <- renderTable({
-#   #   ESAD_cargois()
-#   # })
-#   
-#   
-#   output$text3 <- renderText({
-#     ESAD_cargois()
-#   })
-# ______________________________________________
   
 
   output$cargois_ui_x_axis <- renderUI({
@@ -1297,7 +1577,7 @@ WHERE COMPLETION_STATUS=0\n"
     # select_date_range <- paste("AND substr(TAKE_OFF_TIME,1,10) BETWEEN ",fr24_input_daterange,sep = '')
     # select_date_range
     query <- input$foo
-    FR24.query(query)
+    FR24.query(query, connection = FR24)
     
   })
   
@@ -1485,6 +1765,12 @@ WHERE COMPLETION_STATUS=0\n"
     infoBox(title = "Destination: ", paste(nb_org, ' airport(s)', sep =''), 
             icon = icon('arrow-down'), color = 'navy', fill = TRUE)
   })
+  output$fr24_info_nb_airline <- renderInfoBox({
+    nb_org <- length(unique(FR24_datatable()$AIRLINE))
+    # p('There are ',nb_flight, ' flights recorded in the database.')
+    infoBox(title = "Airline: ", paste(nb_org, ' Airline(s)', sep =''), 
+            icon = icon('group'), color = 'red', fill = TRUE)
+  })
   
   # 6. FREQUENCY ####
   ## 6.1 render selectinput####
@@ -1505,7 +1791,7 @@ WHERE COMPLETION_STATUS=0\n"
           
           data <- data.frame(FR24_BIO_AC())
           
-          df <- data.frame(table(data[,selected]))
+          df <- data.frame(table(data[,paste(selected)]))
           p <- plot_ly(df[order(df$Freq, decreasing = TRUE),],
                        x = Var1,
                        y = Freq,
@@ -1597,15 +1883,20 @@ WHERE COMPLETION_STATUS=0\n"
   
   ## ___creat node__####
   FR24_NW_NODE <- reactive({
+    
     apt_region <- data.table(AIRPORT_LOCATION())[,c('IATA','name','region_name'), with = FALSE]
     airport <- data.table(label = c(FR24_BIO_AC()$ORG, FR24_BIO_AC()$DST))
-    
+
     freq <- airport[, .N ,by = label]
-    freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
-    
-    nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
-                        title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
-    nodes
+    if(nrow(freq)!=0){
+      freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
+      
+      nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
+                          title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
+      nodes
+    }else {
+      warning('No data')
+    }
   })
   
   ## ___creat edges__####
@@ -1613,13 +1904,17 @@ WHERE COMPLETION_STATUS=0\n"
     match <- data.table(FR24_NW_NODE()$id, FR24_NW_NODE()$label)
     
     routes <- data.table(ORG = FR24_BIO_AC()$ORG, DST = FR24_BIO_AC()$DST)
-    
-    freq_routes <- routes[, .N ,by = list(ORG, DST)]
-    freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
-    freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
-    
-    edges <- data.frame(from = freq_routes$V1.x, to = freq_routes$V1.y )
-    edges
+    if(nrow(routes)!=0){
+      freq_routes <- routes[, .N ,by = list(ORG, DST)]
+      freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
+      freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
+      
+      edges <- data.frame(from = freq_routes$V1.x, to = freq_routes$V1.y )
+      edges
+    }else {
+      warning('No data')
+    }
+
   })
   
   
@@ -1634,6 +1929,34 @@ WHERE COMPLETION_STATUS=0\n"
     net
   })
   
+  ## render visNetwork Graph  ####
+  output$fr24_network_viz <- renderVisNetwork({
+    nodes <- FR24_NW_NODE()
+    edges <- FR24_NW_EDGE()
+    if(nrow(nodes)>50){
+      visNetwork(nodes, edges)%>%
+        visIgraphLayout() %>%
+        visPhysics(stabilization = FALSE)%>%
+        visEdges(arrows = list(to = list(enabled = TRUE, scaleFactor = 0.5)))%>%
+        visOptions(highlightNearest = TRUE, 
+                   selectedBy = "group",
+                   manipulation = TRUE) %>%
+        visLegend(width = 0.1, position = "right")
+      
+    }else{
+      visNetwork(nodes, edges)%>%
+        visIgraphLayout() %>%
+        # visPhysics(stabilization = FALSE)%>%
+        visEdges(smooth = FALSE, 
+                 arrows = list(to = list(enabled = TRUE, scaleFactor = 2)))%>%
+        visOptions(highlightNearest = TRUE, 
+                   selectedBy = "group",
+                   manipulation = TRUE) %>%
+        visLegend(width = 0.1, position = "right")%>%
+        visNodes(font = list(size=50), scaling = list(min = 30, max = 80))
+    }
+  })
+  
   observeEvent(FR24_NW_NODE(),
     {
       updateSelectizeInput(session = session, inputId = 'fr24_nwpath_org',
@@ -1645,6 +1968,10 @@ WHERE COMPLETION_STATUS=0\n"
                            choices = levels(FR24_NW_NODE()$label), 
                            selected = levels(FR24_NW_NODE()$label)[1],
                            server = TRUE)
+      updateSelectizeInput(session, 'fr24_aptflow_selairport', 
+                        choices = levels(FR24_NW_NODE()$label), 
+                        selected = levels(FR24_NW_NODE()$label)[1],
+                        server = TRUE)
     }
   )
 
@@ -1677,166 +2004,12 @@ WHERE COMPLETION_STATUS=0\n"
   })
   
   
-  ## render visNetwork Graph  ####
-  output$fr24_network_viz <- renderVisNetwork({
-    nodes <- FR24_NW_NODE()
-    edges <- FR24_NW_EDGE()
-    # data <- data.table(FR24_BIO_AC())
-    # 
-    # apt_loc <- data.table(AIRPORT_LOCATION())
-    # apt_region <- apt_loc[,c('IATA','name','region_name'), with = FALSE]
-    # 
-    # airport <- data.table(label = c(data$ORG, data$DST))
-    # 
-    # freq <- airport[, .N ,by = label]
-    # freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
-    # 
-    # nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
-    #                     
-    #                     title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
-    # 
-    # match <- data.table(nodes$id, nodes$label)
-    # 
-    # routes <- data.table(ORG = data$ORG, DST = data$DST)
-    # freq_routes <- routes[, .N ,by = list(ORG, DST)]
-    # 
-    # freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
-    # freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
-    # 
-    # edges <- data.frame(from = freq_routes$V1.x, to = freq_routes$V1.y )
+
+
+ ## Airport traffic ####
+
+  
     
-    # df <- unique(data.frame(ORG = data$ORG, DST = data$DST, stringsAsFactors = FALSE))
-    if(nrow(nodes)>50){
-      visNetwork(nodes, edges)%>%
-        visIgraphLayout() %>%
-        visPhysics(stabilization = FALSE)%>%
-        visEdges(arrows = list(to = list(enabled = TRUE, scaleFactor = 0.5)))%>%
-        visOptions(highlightNearest = TRUE, 
-                   selectedBy = "group",
-                   manipulation = TRUE) %>%
-        visLegend(width = 0.1, position = "right")
-      
-    }else{
-      visNetwork(nodes, edges)%>%
-        visIgraphLayout() %>%
-        # visPhysics(stabilization = FALSE)%>%
-        visEdges(smooth = FALSE, 
-                 arrows = list(to = list(enabled = TRUE, scaleFactor = 2)))%>%
-        visOptions(highlightNearest = TRUE, 
-                   selectedBy = "group",
-                   manipulation = TRUE) %>%
-        visLegend(width = 0.1, position = "right")%>%
-        visNodes(font = list(size=50), scaling = list(min = 30, max = 80))
-    }
-  })
-  # output$fr24_network_viz <- renderPlot({
-  #   data <- data.table(FR24_BIO_AC())
-  #   
-  #   data <- data.table(ORG = data$ORG, DST = data$DST)
-  #   freq <- data[, .N ,by = list(ORG, DST)]
-  #   
-  #   # df <- unique(data.frame(ORG = data$ORG, DST = data$DST, stringsAsFactors = FALSE))
-  #   
-  #   edges <- NULL
-  #   weight <- freq$N
-  #   for (i in 1:nrow(freq)){
-  #     OD <- c(freq[i]$ORG, freq[i]$DST)
-  #     edges <- c(edges,OD)
-  #   }
-  #   
-  #   
-  #   g3 <- graph(edges)
-  #   
-  #   E(g3)$weight <- weight
-  #   E(g3)$width <- E(g3)$weight/mean(E(g3)$weight)
-  #   
-  #   
-  #   vertex_name <- V(g3)$name
-  #   vertex_list <- data.table(c(data$ORG, data$DST))
-  #   vertex_freq <- data.frame(vertex_list[, .N ,by = V1])
-  #   row.names(vertex_freq) <- vertex_freq$V1
-  #   vertex_size <- vertex_freq[vertex_name,]$N
-  #   size2 <- log((vertex_size - min(vertex_size))/(max(vertex_size)-min(vertex_size))*100+1)*3
-  #   
-  #   if(all(is.na(size2))){
-  #     V(g3)$size = rep(10, length(vertex_size))
-  #   } else {
-  #     V(g3)$size = size2
-  #   }
-  #   
-  #   l <- layout_with_fr(g3)
-  #   # l <- layout_in_circle(g3)
-  #   plot(g3, edge.arrow.size=.2, vertex.color="gold", 
-  #        
-  #        vertex.frame.color="gray", vertex.label.color="black", 
-  #        
-  #        vertex.label.cex=0.8, vertex.label.dist=0, edge.curved=0.2,
-  #        layout=l) 
-  #   
-  # })
-  
-#   output$fr24_airline_network_map <- renderUI({
-#       AP <- data.table(AIRPORT_LOCATION())
-#       AP_list <- unique(c(FR24_BIO_AC()$ORG,  FR24_BIO_AC()$DST))
-#       airport <- data.table('IATA' = AP_list)
-#       airport <- merge(airport, AP, by = 'IATA')
-# 
-#       ## create var planes
-#       element <- paste('["',airport$name, '",', airport$lat, ',', airport$long, ']', sep = '')
-#       list <- paste(element, collapse = ',')
-#       var <- paste('var planes = [', list, '];', sep = "")
-#       
-#       ## create airport pairs
-#       AP_pair <- unique(data.table(FR24_BIO_AC()$ORG,  FR24_BIO_AC()$DST))
-#       AP_pair <- merge(AP_pair, AP, by.x = 'V1', by.y = 'IATA')
-#       AP_pair <- merge(AP_pair, AP, by.x = 'V2', by.y = 'IATA')
-#       colnames(AP_pair) <- c('ORG', 'DST', 'long.x', 'lat.x', 'name.x','long.y', 'lat.y', 'name.y')
-#       
-#       element2 <- paste('[',AP_pair$lat.x, ',', AP_pair$long.x, ',', AP_pair$lat.y,',', AP_pair$long.y, ']', sep = '')
-#       list2 <- paste(element2, collapse = ',')
-#       var_aptPairs <- paste('var airportPairs = [', list2, '];', sep = "")
-# 
-#     HTML('
-# 
-# <div id="mapid"></div>
-# 
-# <script>', var, var_aptPairs, '
-# 
-#           var mymap = L.map("mapid").setView([30, 90], 2);
-# 
-#           L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoicXh6enhxIiwiYSI6ImNpcm0ycTF3NjAwM2xpMmt3c2I3ODRkZWMifQ.Kyuc_AtP_lsSUpb1KZNQhg",{
-# attribution: "Airbus Cargo Data Miner",
-# maxZoom: 18,
-# id: "qxzzxq.12img075",
-# accessToken: "pk.eyJ1IjoicXh6enhxIiwiYSI6ImNpcm0ycTF3NjAwM2xpMmt3c2I3ODRkZWMifQ.Kyuc_AtP_lsSUpb1KZNQhg"
-# 
-# }).addTo(mymap);
-#     
-#   L.Polyline.Arc([35, -89], [40, -75]).addTo(mymap);
-# L.Polyline.Arc([1.6, 103], [5.3, 120]).addTo(mymap);
-# 
-# 		for (var i = 0; i < planes.length; i++) {
-# 			marker = new L.marker([planes[i][1],planes[i][2]])
-# 				.bindPopup(planes[i][0])
-# 				.addTo(mymap);
-# 		}
-# 
-# 		for (var m = 0; m < airportPairs.length; m++) {
-# 			Polyline = new L.Polyline.Arc([airportPairs[m][0], airportPairs[m][1]], [airportPairs[m][2], airportPairs[m][3]]).addTo(mymap);
-# 		}
-# 
-# </script>
-# 
-#          ')
-# 
-#   })
-  
-  
-  
-  
-  
-  
-  
   
 # ___________________END of SERVER.R__________________ ####
 }
@@ -2275,3 +2448,175 @@ WHERE COMPLETION_STATUS=0\n"
 #     textInput('dst.sea','Destination')
 #   }
 # })
+# output$fr24_network_viz <- renderPlot({
+#   data <- data.table(FR24_BIO_AC())
+#   
+#   data <- data.table(ORG = data$ORG, DST = data$DST)
+#   freq <- data[, .N ,by = list(ORG, DST)]
+#   
+#   # df <- unique(data.frame(ORG = data$ORG, DST = data$DST, stringsAsFactors = FALSE))
+#   
+#   edges <- NULL
+#   weight <- freq$N
+#   for (i in 1:nrow(freq)){
+#     OD <- c(freq[i]$ORG, freq[i]$DST)
+#     edges <- c(edges,OD)
+#   }
+#   
+#   
+#   g3 <- graph(edges)
+#   
+#   E(g3)$weight <- weight
+#   E(g3)$width <- E(g3)$weight/mean(E(g3)$weight)
+#   
+#   
+#   vertex_name <- V(g3)$name
+#   vertex_list <- data.table(c(data$ORG, data$DST))
+#   vertex_freq <- data.frame(vertex_list[, .N ,by = V1])
+#   row.names(vertex_freq) <- vertex_freq$V1
+#   vertex_size <- vertex_freq[vertex_name,]$N
+#   size2 <- log((vertex_size - min(vertex_size))/(max(vertex_size)-min(vertex_size))*100+1)*3
+#   
+#   if(all(is.na(size2))){
+#     V(g3)$size = rep(10, length(vertex_size))
+#   } else {
+#     V(g3)$size = size2
+#   }
+#   
+#   l <- layout_with_fr(g3)
+#   # l <- layout_in_circle(g3)
+#   plot(g3, edge.arrow.size=.2, vertex.color="gold", 
+#        
+#        vertex.frame.color="gray", vertex.label.color="black", 
+#        
+#        vertex.label.cex=0.8, vertex.label.dist=0, edge.curved=0.2,
+#        layout=l) 
+#   
+# })
+
+#   output$fr24_airline_network_map <- renderUI({
+#       AP <- data.table(AIRPORT_LOCATION())
+#       AP_list <- unique(c(FR24_BIO_AC()$ORG,  FR24_BIO_AC()$DST))
+#       airport <- data.table('IATA' = AP_list)
+#       airport <- merge(airport, AP, by = 'IATA')
+# 
+#       ## create var planes
+#       element <- paste('["',airport$name, '",', airport$lat, ',', airport$long, ']', sep = '')
+#       list <- paste(element, collapse = ',')
+#       var <- paste('var planes = [', list, '];', sep = "")
+#       
+#       ## create airport pairs
+#       AP_pair <- unique(data.table(FR24_BIO_AC()$ORG,  FR24_BIO_AC()$DST))
+#       AP_pair <- merge(AP_pair, AP, by.x = 'V1', by.y = 'IATA')
+#       AP_pair <- merge(AP_pair, AP, by.x = 'V2', by.y = 'IATA')
+#       colnames(AP_pair) <- c('ORG', 'DST', 'long.x', 'lat.x', 'name.x','long.y', 'lat.y', 'name.y')
+#       
+#       element2 <- paste('[',AP_pair$lat.x, ',', AP_pair$long.x, ',', AP_pair$lat.y,',', AP_pair$long.y, ']', sep = '')
+#       list2 <- paste(element2, collapse = ',')
+#       var_aptPairs <- paste('var airportPairs = [', list2, '];', sep = "")
+# 
+#     HTML('
+# 
+# <div id="mapid"></div>
+# 
+# <script>', var, var_aptPairs, '
+# 
+#           var mymap = L.map("mapid").setView([30, 90], 2);
+# 
+#           L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoicXh6enhxIiwiYSI6ImNpcm0ycTF3NjAwM2xpMmt3c2I3ODRkZWMifQ.Kyuc_AtP_lsSUpb1KZNQhg",{
+# attribution: "Airbus Cargo Data Miner",
+# maxZoom: 18,
+# id: "qxzzxq.12img075",
+# accessToken: "pk.eyJ1IjoicXh6enhxIiwiYSI6ImNpcm0ycTF3NjAwM2xpMmt3c2I3ODRkZWMifQ.Kyuc_AtP_lsSUpb1KZNQhg"
+# 
+# }).addTo(mymap);
+#     
+#   L.Polyline.Arc([35, -89], [40, -75]).addTo(mymap);
+# L.Polyline.Arc([1.6, 103], [5.3, 120]).addTo(mymap);
+# 
+# 		for (var i = 0; i < planes.length; i++) {
+# 			marker = new L.marker([planes[i][1],planes[i][2]])
+# 				.bindPopup(planes[i][0])
+# 				.addTo(mymap);
+# 		}
+# 
+# 		for (var m = 0; m < airportPairs.length; m++) {
+# 			Polyline = new L.Polyline.Arc([airportPairs[m][0], airportPairs[m][1]], [airportPairs[m][2], airportPairs[m][3]]).addTo(mymap);
+# 		}
+# 
+# </script>
+# 
+#          ')
+# 
+#   })
+
+
+# data <- data.table(FR24_BIO_AC())
+# 
+# apt_loc <- data.table(AIRPORT_LOCATION())
+# apt_region <- apt_loc[,c('IATA','name','region_name'), with = FALSE]
+# 
+# airport <- data.table(label = c(data$ORG, data$DST))
+# 
+# freq <- airport[, .N ,by = label]
+# freq <- merge(freq, apt_region, by.x = 'label', by.y = 'IATA', all.x=TRUE, all.y=FALSE)
+# 
+# nodes <- data.frame(id = row.names(freq), label = freq$label, value = freq$N, group = freq$region_name,
+#                     
+#                     title = paste0("<p>Airport: <b>", freq$name ,"</b><br>Numbers of take-off & landing: ", freq$N,"</p>"))
+# 
+# match <- data.table(nodes$id, nodes$label)
+# 
+# routes <- data.table(ORG = data$ORG, DST = data$DST)
+# freq_routes <- routes[, .N ,by = list(ORG, DST)]
+# 
+# freq_routes <- merge(freq_routes, match, by.x="ORG", by.y="V2", all.x=TRUE, all.y=FALSE)
+# freq_routes <- merge(freq_routes, match, by.x="DST", by.y="V2", all.x=TRUE, all.y=FALSE)
+# 
+# edges <- data.frame(from = freq_routes$V1.x, to = freq_routes$V1.y )
+
+# df <- unique(data.frame(ORG = data$ORG, DST = data$DST, stringsAsFactors = FALSE))
+
+
+
+# Statistical analysis ####
+# 1. get ESAD ####
+# can not use the folloing methode, tooooo slow
+
+# ______________________________________________
+#   ESAD_cargois <- eventReactive(DATA(), {
+#     df <- data.frame(DATA(),stringsAsFactors = FALSE)
+#     df <- df[complete.cases(df),]
+#     # get the unique ORG DST pairs
+#     orgdst <- unique(paste(df$ORIGIN_AIRPORT_CODE, df$DESTINATION_AIRPORT_CODE,
+#                            sep = ""))
+#     
+#     # make the query 
+#     body = "SELECT from_.IATA AS ORG, 
+# to_.IATA AS DST, 
+# apt.DISTANCE, 
+# apt.ESAD 
+# FROM BIO_NEO_PROD.bio.AIRPORT_PAIR apt 
+# INNER JOIN BIO_NEO_PROD.bio.AIRPORT from_ ON apt.ORG_AIRPORT_ID = from_.AIRPORT_ID 
+# INNER JOIN BIO_NEO_PROD.bio.AIRPORT to_ ON apt.DST_AIRPORT_ID = to_.AIRPORT_ID "
+#     
+#     ## generate the part 'WHERE BLABLABLA'
+#     query <- paste(orgdst, collapse = "' OR from_.IATA+ to_.IATA = '")
+#     query2 <- paste("WHERE (from_.IATA+ to_.IATA = '", query, "')", sep = "")
+#     
+#     ## Final query
+#     query_final <- paste(body, query2, sep = "")
+#     query_final
+#     # send query to BIO
+#     # sqlQuery(BIO, query_final)
+#   })
+#   
+#   # output$test3 <- renderTable({
+#   #   ESAD_cargois()
+#   # })
+#   
+#   
+#   output$text3 <- renderText({
+#     ESAD_cargois()
+#   })
+# ______________________________________________

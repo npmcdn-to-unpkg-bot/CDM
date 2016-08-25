@@ -9,6 +9,7 @@
 library(shinydashboard)
 
 
+
 #--------------------------------------
 # _____________Welcome_________ -------
 #--------------------------------------
@@ -41,8 +42,7 @@ fluidpage.cargois.dataloader <- fluidPage(
         fluidRow(
           column(4,
                  selectizeInput(
-                   'level', 'Query level', choices = choice.level
-                 ),
+                   'level', 'Query level', choices = NULL),
                  
                  uiOutput(
                    'year_cargois_ui'     ),
@@ -73,14 +73,14 @@ fluidpage.top_apt_inputs <- fluidPage(
   fluidRow(
     box(width = 12, title = 'Top Airports/Air routes', solidHeader = TRUE, status = 'success',
         fluidRow(
-          column(4,
+          column(3,
                  sliderInput('pt.size.top.apt','Select the point size',
                              min = 1, max = 100, value = 50),
                  sliderInput('nb.top','Enter the number of airport/air routes to display',
                              min = 1, max = 50, value = 20),
                  p('thickness = weight, color = yield')
           ),
-          column(8,
+          column(9,
                  fluidRow(
                    tabBox(width = 12,
                           tabPanel(title = 'Top Airport',
@@ -170,7 +170,7 @@ box.yield.calc.inp <- box( width = 3,
                                      )
                            ), 
                            selectizeInput(
-                             'year2', 'Select the year', choices = choice.year
+                             'year2', 'Select the year', choices = NULL
                            ),
                            tags$hr(),
                            checkboxInput('header', 'Header', FALSE),
@@ -188,10 +188,10 @@ box.yield.calc.out <- box(width = 9,
 ## box.yield.calc.map: Mapping the air routes in the results  #########
 box.yield.calc.map <- box(width = 3,
                           selectizeInput(
-                            'projection', 'Select map projection', choices = choice.projection
+                            'projection', 'Select map projection', choices = NULL
                           ),
                           selectizeInput(
-                            'compare', 'Select the criteria', choices = choice.compare
+                            'compare', 'Select the criteria', choices = NULL
                           ),
                           # selectizeInput(
                           #   'color','Select line color', choices = choice.color
@@ -339,7 +339,7 @@ fluidpage_Seabury = fluidPage(
           column(3,
                  h4(strong('---Treemap---')),
                  selectizeInput(
-                   'level.sea', 'Query level', choices = choice.level.sea
+                   'level.sea', 'Query level', choices = NULL
                  ),
                  uiOutput('year.sea.ui'),
                  # uiOutput('org.sea.ui'),
@@ -351,7 +351,7 @@ fluidpage_Seabury = fluidPage(
                  # textInput('org.sea','Origin'),
                  # textInput('dst.sea','Destination'),
                  selectizeInput(
-                   'sfc.air', 'Select freight type', choices = choice.sfc.air
+                   'sfc.air', 'Select freight type', choices = NULL
                  ),
                  actionButton('go.sea','Draw treemap'),
                  
@@ -538,112 +538,83 @@ fluidrow_FR24_load <- fluidPage(
                         title = 'Raw data summary',
                         infoBoxOutput('fr24_info_nb_flight'),
                         infoBoxOutput('fr24_info_nb_tail'),
+                        infoBoxOutput('fr24_info_nb_airline'),
                         infoBoxOutput('fr24_info_nb_org'),
                         infoBoxOutput('fr24_info_nb_dst')
                         )
                  ),
                  
                  fluidRow(
-                     box( width = 12, 
-                        title = 'Data quality check',
-                        # uiOutput('fr24ui_freq_sel_col'),
-                        selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
-                        
-                        plotlyOutput('fr24_freq_check_dt_quality')
-                        # ,
-                        # style = 'overflow-y: scroll; max-height: 700px'
-                   )
+                   tabBox(width = 12,
+                          tabPanel(title = 'Data Cleaner',
+                                   uiOutput('fr24ui_select_reg_number2'),
+                                   uiOutput('fr24ui_select_flight_number2'),
+                                   uiOutput('fr24ui_select_org2'),
+                                   uiOutput('fr24ui_select_dst2')
+                                   ),
+                          tabPanel(title = 'FlightRadar24 raw data preview', 
+                                   div(dataTableOutput('raw_fr24'),
+                                       style = 'overflow-x: scroll')),
+                          tabPanel(title = 'FR24 with BIO AC_TYPE',
+                                   p('if there is no information after [LANDING_TIME], this means that this aircraft is nolonger in service today. We do not have the current status in BIO database.'),
+                                   div(dataTableOutput('BIO_fr24'),
+                                       style = 'overflow-x: scroll')), 
+                          tabPanel(title = 'Data quality check',
+                                   selectizeInput('fr24_freq_sel_col', 
+                                                  'Select variable', 
+                                                  choices = NULL),
+                                   plotlyOutput('fr24_freq_check_dt_quality')
+                          )
+                          )
+                   #   box( width = 12, 
+                   #      title = 'Data quality check',
+                   #      # uiOutput('fr24ui_freq_sel_col'),
+                   #      selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
+                   #      
+                   #      plotlyOutput('fr24_freq_check_dt_quality')
+                   #      # ,
+                   #      # style = 'overflow-y: scroll; max-height: 700px'
+                   # )
                  )
           )
         ) # end frow
     ) # end box
-  ), # end frow
-  
+  ) # end frow
   
   # fluidRow(
   #   
-  #   # _query ####
-  #   box( width = 4,
-  #     title = 'FlightRadar24', status = 'warning', solidHeader = TRUE,
-  #     dateRangeInput('fr24_daterange', 'Select the range of date',
-  #                    start = '2015-9-14', end = '2015-9-20', startview = 'year'),
-  #     # textInput('fr24_airline.code', 'Enter the Airline IATA code'),
-  #     
-  #     selectizeInput('fr24_airline.code', 'Select airline', choices = NULL,
-  #                    multiple = TRUE),
-  #     
-  #     textInput('fr24_select_org', 'Origin airport code',NA),
-  #     textInput('fr24_select_dst', 'Destination airport code',NA),
-  #     textInput('fr24_select_reg_number', 
-  #               'Registration number (if multiple, separate with ";")',NA),
-  #     # textInput('fr24_select_ac_type', 
-  #     #           'Aircraft type (if multiple, separate with ";")',NA),
-  #     
-  #     selectizeInput('fr24_select_ac_type', 'Aircraft type', choices = NULL,
-  #                    multiple = TRUE),
-  #     
-  #     uiOutput('textaera_fr24'),
-  #     
-  #     # actionButton('go_fr24','Generate query') ,,
-  # 
-  #     actionButton('go2_fr24','Query FR24') ,      
-  #     actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
-  #                  style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-  #     downloadButton('dl_fr24', 'Download data')
-  #   ),
-  #   
-  #   box( width = 8,
-  #        title = 'Raw data summary',
-  #        infoBoxOutput('fr24_info_nb_flight'),
-  #        infoBoxOutput('fr24_info_nb_tail'),
-  #        infoBoxOutput('fr24_info_nb_org'),
-  #        infoBoxOutput('fr24_info_nb_dst')
-  #   ),
-  #   
-  #   box( width = 8, 
-  #        title = 'Data quality check',
-  #        # uiOutput('fr24ui_freq_sel_col'),
-  #        selectizeInput('fr24_freq_sel_col', 'Select variable', choices = NULL),
-  #        
-  #        plotlyOutput('fr24_freq_check_dt_quality'),
-  #        style = 'overflow-y: scroll; max-height: 700px'
+  #   # _data Cleaner ####
+  #   box( width = 12, collapsible = TRUE, 
+  #        title = 'Data Cleaner', status = 'primary',
+  #        uiOutput('fr24ui_select_reg_number2'),
+  #        uiOutput('fr24ui_select_flight_number2'),
+  #        uiOutput('fr24ui_select_org2'),
+  #        uiOutput('fr24ui_select_dst2')#,
+  #        # actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
+  #        #              style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
   #   )
   # ),
-  
-  fluidRow(
-    
-    # _data Cleaner ####
-    box( width = 12, collapsible = TRUE, 
-         title = 'Data Cleaner', status = 'primary',
-         uiOutput('fr24ui_select_reg_number2'),
-         uiOutput('fr24ui_select_flight_number2'),
-         uiOutput('fr24ui_select_org2'),
-         uiOutput('fr24ui_select_dst2')#,
-         # actionButton('fr24_refresh',' Enrich with BIO',icon("paper-plane"), 
-         #              style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
-    )
-  ),
-  
-  # *****TEST OUTPUT*****
-  fluidRow(
-    
-    box(title = 'FlightRadar24 raw data preview', width = 12,status = 'danger',
-        dataTableOutput('raw_fr24')),
-    box(title = 'FR24 with BIO AC_TYPE',width = 12, status = 'warning',
-        p('if there is no information after [LANDING_TIME], this means that this aircraft is nolonger in service today. We do not have the current status in BIO database.'),
-        div(dataTableOutput('BIO_fr24'),
-            style = 'overflow-x: scroll')),
-    
-    tableOutput('test_fr24_tab')
-    # textOutput('fr24_bio_ac_colnames'),
-    # textOutput('test2_fr24')
-  )
+  # 
+  # # *****TEST OUTPUT*****
+  # fluidRow(
+  #   
+  #   box(title = 'FlightRadar24 raw data preview', width = 12,status = 'danger',
+  #       dataTableOutput('raw_fr24')),
+  #   box(title = 'FR24 with BIO AC_TYPE',width = 12, status = 'warning',
+  #       p('if there is no information after [LANDING_TIME], this means that this aircraft is nolonger in service today. We do not have the current status in BIO database.'),
+  #       div(dataTableOutput('BIO_fr24'),
+  #           style = 'overflow-x: scroll')),
+  #   
+  #   tableOutput('test_fr24_tab')
+  #   # textOutput('fr24_bio_ac_colnames'),
+  #   # textOutput('test2_fr24')
+  # )
 )
 
 # fluidrow_FR24_airline ####
 fluidrow_FR24_airline <- fluidPage(
   fluidRow(
-    tabBox(width = '100%',
+    tabBox(width = '100%', title = 'Airline Network',
         tabPanel(title = 'Airport map', width = '100%',
                     # htmlOutput('fr24_airline_network_map')
         leafletOutput('fr24_airline_network_map', height = 650)
@@ -669,8 +640,37 @@ fluidrow_FR24_airline <- fluidPage(
     )
   )
 )
-fluidrow_FR24_airport <- fluidPage()
-fluidrow_FR24_AC <- fluidPage()
+
+fluidrow_FR24_airport <- fluidPage(
+  fluidRow(
+    tabBox(width = '100%', title = 'Airport traffic',
+          tabPanel(title = 'Traffic visualization', width = '100%',
+                   fluidRow(
+                     column(3,
+                            box(title = 'Parameters', width = '100%',
+                                selectizeInput('fr24_aptflow_selairport',
+                                               'Select airport(s)', choices = NULL,
+                                               multiple = FALSE))
+                     ),
+                     column(9,
+                            box(width = '100%'))
+                   )
+          )
+
+    )
+  )
+)
+
+
+fluidrow_FR24_AC <- fluidPage(
+  fluidRow(
+    box(width = 12, solidHeader = TRUE,
+        tabBox(width = '100%', title = 'Aircraft utilization',
+               tabPanel(title = ''))
+    )
+    
+  )
+)
 
 #__________ITEM END_______________ -----------------------------------------------
 
@@ -728,8 +728,8 @@ dashboardPage(
       menuItem('Flightradar24', icon = icon('database'),
                menuSubItem('Data loader FR24', tabName = 'loader_fr24', icon = icon('cloud-download')),
                menuSubItem('Airline network', tabName = 'fr24_airline', icon = icon('signal')),
-               menuSubItem("Airport", tabName = "fr24_airport", icon = icon("gear")),
-               menuSubItem("Aircraft", tabName = "fr24_AC", icon = icon("gear"))
+               menuSubItem("Airport traffic", tabName = "fr24_airport", icon = icon("map-pin")),
+               menuSubItem("Aircraft utilization", tabName = "fr24_AC", icon = icon("plane"))
                
       ),
       
@@ -737,20 +737,6 @@ dashboardPage(
                menuSubItem('Code finder', tabName = 'tool1', icon = icon('search')),
                menuSubItem("developing", tabName = "tool2", icon = icon("gear"))
       )
-      #-------------------------------------------
-      
-
-      #-------------- Old structure --------------
-      # menuItem('Dashboard',tabName = 'dashboard', icon = icon('dashboard'), 
-      #          # menuSubItem('Welcome', tabName = 'welcome', icon = icon('home')),
-      #          menuSubItem('Cargo IS', tabName = 'cargois', icon = icon('dollar')),
-      #          menuSubItem('Seabury Trade', tabName = 'sea_trade', icon = icon('briefcase')),
-      #          menuSubItem('Flightradar24', tabName = 'fr24', icon = icon('map-marker')),
-      #          menuSubItem('Test',tabName = 'test', icon = icon('ban'))),
-      # 
-      # menuItem("Yield Calculator", tabName = "yield", icon = icon("calculator"),badgeLabel = 'New', badgeColor = 'green'),
-      # menuItem("Analysis", tabName = "analysis", icon = icon("map")),
-      # menuItem("Map", tabName = "map", icon = icon("map"))
       #-------------------------------------------
       
     ),
@@ -768,7 +754,7 @@ dashboardPage(
                   background-size: cover; /* version standardisée */
 
                  }"
-                    )),
+    )),
     
     # absolute box position ####
     tags$head(tags$style(type = "text/css", 
@@ -803,25 +789,22 @@ dashboardPage(
                            ")),#2E86C1
     
     conditionalPanel(condition="$('html').hasClass('shiny-busy')",
-                     tags$div(img(src = 'airbus.png',height = 52, width = 216, 
-                                  img(src= 'hourglass.gif')),
+                     tags$div(img(src = 'airbus.png',
+                                  height = 52, 
+                                  width = 216, 
+                                  img(src= 'hourglass.gif')
+                                  ),
                               id="loadmessage")),
     
-    tags$head(HTML('
-                   
-     <link rel="stylesheet" href="W3S.css">
-     <link rel="stylesheet" href="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
-     <script src="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
-     <script src="arc.js"></script>
-     <script src="Leaflet.Arc.min.js"></script>')),
-    
-    # # test keydown
-    # conditionalPanel(condition="$('html').keypress(function(event) {
-    #                  event.which == 78
-    # })",
-    #                  tags$div(img(src = 'airbus.png',height = 52, width = 216, 
-    #                               img(src= 'hourglass.gif')),
-    #                           id="loadmessage")),
+    tags$head(
+      HTML('
+           <link rel="stylesheet" href="W3S.css">
+           <link rel="stylesheet" href="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+           <script src="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+           <script src="arc.js"></script>
+           <script src="Leaflet.Arc.min.js"></script>'
+      )
+    ),
     
 
     br(),
@@ -829,36 +812,27 @@ dashboardPage(
     br(),
     
     # ------------- R logo ####
-    img(src="MROs.png",height = 53, width = 63, p((' Microsoft R Open \nVersion 3.2.5'))),
+    img(src="MROs.png",
+        height = 53, 
+        width = 63, 
+        p((' Microsoft R Open \nVersion 3.2.5'))),
     
     h4("Cargo Data Miner alpha"),
-    p('v0.2 06/06/2016')
-    # p('v0.1 04/05/2016')
+    p('v0.2 22/08/2016')
+
   ),
   
   # ________Dashboard tab content_________###### DISPLAY NEW created sections ----------------
   dashboardBody(
 
-
     tabItems(
-
       ## tab 0: Welcome ----
       tabItem(
-        
         tabName = 'welcome', 
         bootstrapPage(
           fluidRow(
-        
-        # HTML('<center><img src="airbus_big.png"></center>'),
-        # h1('Welcome to Cargo Data Miner alpha!', align = 'center'),
-        # p('This is an web application written on R Shiny developed by CSMX. The
-        #   objectif of this application is to facilitate the data mining process of our daily work.', align = 'center')
-
 
             HTML('
-
-
-      
            <div class="w3-container w3-animate-opacity">
            <img style="display: block; margin-left: auto; margin-right: auto;" src="airbus_big.png">
            <div style="margin-left: auto; margin-right: auto; width: 700px">
@@ -871,7 +845,7 @@ dashboardPage(
            
            <div class="w3-container w3-white ">
            <p><i>Cargo Data Miner</i> is a R Shiny Dashboard application. It is developed by CSMX (Freighter Marketing). The initiative is to build a platform where everybody could query and analyze cargo data.
-      <i>Cargo Data Miner</i> provides automatic data analysis and visualization for the following three databases:</p>
+           <i>Cargo Data Miner</i> provides automatic data analysis and visualization for the following three databases:</p>
            
            <div class="w3-dropdown-hover">
            <span class="w3-tag w3-light-grey w3-small w3-margin-bottom">Cargo IS</span>
@@ -902,9 +876,13 @@ dashboardPage(
            
       
            <P>The code is written using <a href="https://mran.revolutionanalytics.com">Microsoft R Open 3.2.5</a>, which is a distribution of R 3.2.5.
-      The CSS framework comes from <a href="http://www.w3schools.com/w3css">W3.CSS</a>.
+           The CSS framework comes from <a href="http://www.w3schools.com/w3css">W3.CSS</a>.
            </p>
-      
+            
+           <p><a href="User_Manuel_CDM.pdf" target="_blank"><strong>Click here</strong></a> to read the user guide.
+           </p>
+
+
            <p>All feedbacks are welcomed! You can reach me by
            <a href="mailto:xuzhou.qin@gmail.com?Subject=CDM%20feedback" target="_top">sending me an email</a>.
            </p>
@@ -913,33 +891,17 @@ dashboardPage(
            </div>
            </div>
       
-           ')
-          ),
+           ') # END HTML
+          ), # END frow
           fluidRow(
             htmlOutput("consol"),
             tags$script('
                         $(document).on("keypress", function (e) {
                         Shiny.onInputChange("key_track", e.which);
-                        });
-                        ')
+                        });'
+            )
           )
-
         )
-        # fluidPage(
-        #   fluidRow(
-        #     
-        #     box( width = 5,
-        #          title = 'Introduction', status = 'success', solidHeader = TRUE,collapsible = TRUE,
-        #          p('This is an web application written on R Shiny developed by CSMX. 
-        #            The objectif of this application is to facilitate the data mining process of our daily work.')
-        #          )
-        #   )
-        #   # fluidRow(
-        #   #          db_connection_check
-        #   # )
-        # )
-        
-        
       ),
       ##-------------------------
       ## TAB 1: Cargo IS ----
@@ -1009,7 +971,6 @@ dashboardPage(
         ### row 2.1: Seabury treemap/evolution chart/table ----
         fluidpage_Seabury 
       ),
-      
       ## TAB 3: FR24 ----
       tabItem(
         tabName = 'loader_fr24',
@@ -1031,22 +992,17 @@ dashboardPage(
         # p('Developing...'),
         fluidrow_FR24_AC
       ),
-
-      
       ## TAB 4: TOOLS ----
       tabItem(
         tabName = 'tool1',
 
           # p('Develop: user consol')
         bootstrapPage(    # ------------- Code Finder####
-                          selectizeInput('level_codefinder','Code finder', choices = choice.codefinder),
+                          selectizeInput('level_codefinder','Code finder', choices = NULL),
                           textInput('name_codefinder','Name'),
                           tableOutput('out_codefinder')
                           # actionButton('Find_code', 'Find code'),
-                          
- 
-          )
-
+        )
       ),
       
       ## Tab 3: Statistical tools
@@ -1061,9 +1017,27 @@ dashboardPage(
     )
   )
 )
+
 #=================================================================
   
 ###### //////////OLD CODE/////////////////// ####
+
+
+
+#-------------- Old structure --------------
+# menuItem('Dashboard',tabName = 'dashboard', icon = icon('dashboard'), 
+#          # menuSubItem('Welcome', tabName = 'welcome', icon = icon('home')),
+#          menuSubItem('Cargo IS', tabName = 'cargois', icon = icon('dollar')),
+#          menuSubItem('Seabury Trade', tabName = 'sea_trade', icon = icon('briefcase')),
+#          menuSubItem('Flightradar24', tabName = 'fr24', icon = icon('map-marker')),
+#          menuSubItem('Test',tabName = 'test', icon = icon('ban'))),
+# 
+# menuItem("Yield Calculator", tabName = "yield", icon = icon("calculator"),badgeLabel = 'New', badgeColor = 'green'),
+# menuItem("Analysis", tabName = "analysis", icon = icon("map")),
+# menuItem("Map", tabName = "map", icon = icon("map"))
+#-------------------------------------------
+
+
 # cargo.is.input <- box(width = 4,
 #                       title = 'Cargo IS query', status = 'warning', solidHeader = TRUE,
 #                       selectizeInput(
